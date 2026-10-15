@@ -1,6 +1,12 @@
 server:
   port: 8083
 
+app:
+  ask:
+    # Cadena de fallback ante 429/503/timeouts del primario (nombres del enum
+    # GoogleGenAiChatModel.ChatModel; vacía = solo primario). Orden: mayor RPD primero.
+    fallback-models: GEMINI_3_5_FLASH_LITE,GEMINI_3_1_FLASH_LITE
+
 eureka:
   client:
     service-url:

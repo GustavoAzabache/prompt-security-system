@@ -34,4 +34,5 @@ CREATE UNIQUE INDEX ux_external_users_email_lower ON external_users (LOWER(email
 INSERT INTO areas (name, director_id, created_at, updated_at) VALUES
     ('TI', NULL, NOW(), NOW()),
     ('RRHH', NULL, NOW(), NOW()),
-    ('ACCOUNTING', NULL, NOW(), NOW());
+    ('ACCOUNTING', NULL, NOW(), NOW()),
+    ('MARKETING', NULL, NOW(), NOW());

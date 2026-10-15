@@ -6,5 +6,6 @@ public record AskResponse(
     String query,
     String answer,
     boolean answered,
+    String model,
     List<AskSource> sources
 ) {}

@@ -50,25 +50,25 @@ public class DocumentController {
         @RequestParam("pageNumber") int pageNumber,
         @AuthenticationPrincipal Jwt jwt
     ) {
-        EmployeeData employeeData = canRead(jwt);
+        EmployeeData employeeData = ensureEmployee(jwt);
 
         Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by(Direction.ASC, "createdAt"));
 
-        return ResponseEntity.ok(documentService.getAll(pageable));
+        return ResponseEntity.ok(documentService.getAll(pageable, employeeData));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<DocumentResponse> getById(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        EmployeeData employeeData = canRead(jwt);
+        EmployeeData employeeData = ensureEmployee(jwt);
 
-        return ResponseEntity.ok(documentService.getById(id));
+        return ResponseEntity.ok(documentService.getById(id, employeeData));
     }
 
     @GetMapping("/{id}/content")
     public ResponseEntity<Resource> getContent(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        EmployeeData employeeData = canRead(jwt);
+        EmployeeData employeeData = ensureEmployee(jwt);
 
-        DocumentContent content = documentService.getContent(id);
+        DocumentContent content = documentService.getContent(id, employeeData);
         String safeFilename = content.fileName().replace("\"", "").replace("\n", "").replace("\r", "");
 
         return ResponseEntity.ok()
@@ -124,7 +124,7 @@ public class DocumentController {
         );
     }
 
-    private EmployeeData canRead(Jwt jwt) {
+    private EmployeeData ensureEmployee(Jwt jwt) {
         EmployeeData employeeData = getEmployeeData(jwt);
 
         if (employeeData.area() == null) throw new ForbiddenReadException("Only employees can read documents");

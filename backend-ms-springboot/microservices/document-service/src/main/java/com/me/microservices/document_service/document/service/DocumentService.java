@@ -46,18 +46,29 @@ public class DocumentService {
     private final DocumentMapper documentMapper;
     private final FileStorageService fileStorageService;
 
-    public List<DocumentResponse> getAll(Pageable pageable) {
+    public List<DocumentResponse> getAll(Pageable pageable, EmployeeData employeeData) {
         return documentRepository.findAll(pageable).stream()
-                .map(documentMapper::fromEntityToResponse)
-                .toList();
+            .filter(doc -> canRead(doc, employeeData))
+            .map(documentMapper::fromEntityToResponse)
+            .toList();
     }
 
-    public DocumentResponse getById(UUID id) {
-        return documentMapper.fromEntityToResponse(findDocumentById(id));
-    }
-
-    public DocumentContent getContent(UUID id) {
+    public DocumentResponse getById(UUID id, EmployeeData employeeData) {
         DocumentEntity entity = findDocumentById(id);
+
+        if (!canRead(entity, employeeData)) {
+            throw new DocumentNotFoundException("The document with ID " + id + " doesn't exist.");
+        }
+
+        return documentMapper.fromEntityToResponse(entity);
+    }
+
+    public DocumentContent getContent(UUID id, EmployeeData employeeData) {
+        DocumentEntity entity = findDocumentById(id);
+
+        if (!canRead(entity, employeeData)) {
+            throw new DocumentNotFoundException("The document with ID " + id + " doesn't exist.");
+        }
 
         Path path = Paths.get(entity.getLocation());
 
@@ -131,6 +142,8 @@ public class DocumentService {
 
         String currentConfidentality = entity.getConfidentialityLevel().name();
 
+        entity = documentRepository.save(entity);
+
         return new ChangeConfidentialityResponse(
             "The document's confidentiality level has been changed from " + oldConfidentality + " to " + currentConfidentality + "."
         );
@@ -153,5 +166,16 @@ public class DocumentService {
     private DocumentEntity findDocumentById(UUID id) {
         return documentRepository.findById(id.toString())
                                     .orElseThrow(() -> new DocumentNotFoundException("The document with ID " + id + " doesn't exist."));
+    }
+
+    private boolean canRead(DocumentEntity entity, EmployeeData employeeData) {
+        return switch (entity.getConfidentialityLevel()) {
+            // PUBLIC se lista a cualquier empleado: el controller ya rechazó
+            // a externos (sin claim "area") antes de llegar aquí.
+            case PUBLIC -> true;
+            case PRIVATE_ALL_AREAS -> true;
+            case PRIVATE_ONLY_AREA -> entity.getArea().equals(employeeData.area());
+            case CONFIDENTIAL -> "DIRECTOR".equals(employeeData.hierarchy());
+        };
     }
 }

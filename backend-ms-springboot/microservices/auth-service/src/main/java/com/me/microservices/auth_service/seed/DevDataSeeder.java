@@ -27,7 +27,8 @@ public class DevDataSeeder implements CommandLineRunner {
     private static final Logger log = LoggerFactory.getLogger(DevDataSeeder.class);
 
     private static final String DEV_PASSWORD = "Password123";
-    private static final String AREA = "TI";
+    private static final String AREA_TI = "TI";
+    private static final String AREA_MARKETING = "MARKETING";
 
     private final EmployeeRepository employeeRepository;
     private final ExternalUserRepository externalUserRepository;
@@ -37,14 +38,22 @@ public class DevDataSeeder implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) {
-        Area ti = areaRepository.findByName(AREA)
+        Area ti = areaRepository.findByName(AREA_TI)
                 .orElseThrow(() -> new IllegalStateException(
                         "DevDataSeeder requiere el área TI (Flyway V1 / import.sql)"));
+        Area marketing = areaRepository.findByName(AREA_MARKETING)
+                .orElseThrow(() -> new IllegalStateException(
+                        "DevDataSeeder requiere el área MARKETING (Flyway V1 / import.sql)"));
 
         seedEmployee("director@demo.test", "Adan", "Director", ti, 3);
         seedEmployee("gerente@demo.test", "Eva", "Gerente", ti, 2);
         seedEmployee("jefe@demo.test", "Caín", "Jefe", ti, 1);
         seedEmployee("operativo@demo.test", "Abel", "Operativo", ti, 0);
+
+        seedEmployee("director-marketing@demo.test", "Adana", "Directora", marketing, 3);
+        seedEmployee("gerente-marketing@demo.test", "Evana", "Gerenta", marketing, 2);
+        seedEmployee("jefe-marketing@demo.test", "Caína", "Jefa", marketing, 1);
+        seedEmployee("operativo-marketing@demo.test", "Abela", "Operativa", marketing, 0);
 
         if (externalUserRepository.existsByEmail("externo@demo.test")) {
             log.info("DevDataSeeder: externo@demo.test ya existe, se omite");
