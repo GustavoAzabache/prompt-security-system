@@ -1,0 +1,25 @@
+server:
+  port: 8082
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+jwt:
+  issuer: prompt_sec_auth_ms
+
+spring:
+  mongodb:
+    uri: mongodb://localhost:27017/prompt_sec_document_ms
+    representation:
+      uuid: standard
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: classpath:certs/public.pem
+
+storage:
+  location: ./storage/documents

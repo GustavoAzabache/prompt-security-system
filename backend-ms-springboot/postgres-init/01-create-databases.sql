@@ -1,0 +1,1 @@
+CREATE DATABASE prompt_sec_auth_ms;

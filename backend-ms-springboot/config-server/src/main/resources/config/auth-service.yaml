@@ -1,0 +1,26 @@
+server:
+  port: 8081
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/prompt_sec_auth_ms
+    username: postgres
+    password: postgres
+
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    open-in-view: false
+
+jwt:
+  private-key: classpath:certs/private.pem
+  public-key: classpath:certs/public.pem
+  expiration-access: 3600000
+  expiration-refresh: 86400000
+  issuer: prompt_sec_auth_ms

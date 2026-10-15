@@ -1,0 +1,46 @@
+server:
+  port: 8083
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:8761/eureka/
+
+jwt:
+  issuer: prompt_sec_auth_ms
+
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/prompt_sec_rag_ms
+    username: postgres
+    password: postgres
+
+  ai:
+    model:
+      # Selector que enciende el embedding de Google (spring.ai.model.embedding.text)
+      embedding.text: google-genai
+    google:
+      genai:
+        api-key: ${GOOGLE_API_KEY}
+        embedding:
+          api-key: ${GOOGLE_API_KEY}
+          text:
+            model: gemini-embedding-001
+            dimensions: 768
+            task-type: RETRIEVAL_DOCUMENT
+        chat:
+          options:
+            model: gemini-3.5-flash
+            temperature: 0.1
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+        dimensions: 768
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          public-key-location: classpath:certs/public.pem

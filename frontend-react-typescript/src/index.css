@@ -1,0 +1,118 @@
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #1e3a5f;
+  --color-on-primary: #ffffff;
+  --color-secondary: #2563eb;
+  --color-on-secondary: #ffffff;
+  --color-accent: #047857;
+  --color-on-accent: #ffffff;
+  --color-background: #e4eaf2;
+  --color-foreground: #0f172a;
+  --color-card: #ffffff;
+  --color-card-foreground: #0f172a;
+  --color-muted: #edf1f6;
+  --color-muted-foreground: #334155;
+  --color-border: #cbd5e1;
+  --color-destructive: #b91c1c;
+  --color-on-destructive: #ffffff;
+  --color-ring: #1e3a5f;
+
+  --font-sans: system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-heading: system-ui, "Segoe UI", Roboto, sans-serif;
+  --font-mono: ui-monospace, Consolas, monospace;
+}
+
+:root {
+  --text: #334155;
+  --text-h: #0f172a;
+  --bg: #e4eaf2;
+  --border: #cbd5e1;
+  --code-bg: #edf1f6;
+  --accent: #047857;
+  --accent-bg: rgba(4, 120, 87, 0.1);
+  --accent-border: rgba(4, 120, 87, 0.5);
+  --social-bg: rgba(237, 241, 246, 0.5);
+  --shadow:
+    rgba(30, 58, 95, 0.12) 0 10px 15px -3px, rgba(30, 58, 95, 0.08) 0 4px 6px -2px;
+
+  --sans: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono: ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) {
+    font-size: 16px;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--color-background);
+}
+
+#root {
+  width: 100%;
+  min-height: 100svh;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  text-align: left;
+  border: 0;
+  background: transparent;
+}
+
+h1,
+h2 {
+  font-family: var(--heading);
+  font-weight: 500;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 56px;
+  letter-spacing: -1.68px;
+  margin: 32px 0;
+  @media (max-width: 1024px) {
+    font-size: 36px;
+    margin: 20px 0;
+  }
+}
+h2 {
+  font-size: 24px;
+  line-height: 118%;
+  letter-spacing: -0.24px;
+  margin: 0 0 8px;
+  @media (max-width: 1024px) {
+    font-size: 20px;
+  }
+}
+p {
+  margin: 0;
+}
+
+code,
+.counter {
+  font-family: var(--mono);
+  display: inline-flex;
+  border-radius: 4px;
+  color: var(--text-h);
+}
+
+code {
+  font-size: 15px;
+  line-height: 135%;
+  padding: 4px 8px;
+  background: var(--code-bg);
+}
