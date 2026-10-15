@@ -13,6 +13,9 @@ interface DocumentListProps {
   error: string | null;
   onRetry: () => void;
   onSelect: (doc: DocumentListItem) => void;
+  page: number;
+  hasMore: boolean;
+  onPageChange: (page: number) => void;
 }
 
 function Meta({ doc }: { doc: DocumentListItem }) {
@@ -28,7 +31,7 @@ function Meta({ doc }: { doc: DocumentListItem }) {
   );
 }
 
-export function DocumentList({ documents, loading, error, onRetry, onSelect }: DocumentListProps) {
+export function DocumentList({ documents, loading, error, onRetry, onSelect, page, hasMore, onPageChange }: DocumentListProps) {
   const [view, setView] = useState<View>('lines');
 
   return (
@@ -119,6 +122,29 @@ export function DocumentList({ documents, loading, error, onRetry, onSelect }: D
               <Meta doc={doc} />
             </button>
           ))}
+        </div>
+      )}
+      {!loading && !error && documents.length > 0 && (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-sm text-muted-foreground">Page {page + 1}</p>
+          <div className="flex gap-2">
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={page === 0}
+              onClick={() => onPageChange(page - 1)}
+            >
+              Previous
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              disabled={!hasMore}
+              onClick={() => onPageChange(page + 1)}
+            >
+              Next
+            </Button>
+          </div>
         </div>
       )}
     </section>

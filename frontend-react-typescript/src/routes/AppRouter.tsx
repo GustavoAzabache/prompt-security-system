@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
+import { AccessPage } from '@/pages/Access/AccessPage';
 import { AdminPage } from '@/pages/Admin/AdminPage';
+import { AskPage } from '@/pages/Ask/AskPage';
 import { DocumentsPage } from '@/pages/Documents/DocumentsPage';
 import { HomePage } from '@/pages/Home/HomePage';
 import { LoginPage } from '@/pages/Login/LoginPage';
@@ -15,9 +17,14 @@ export function AppRouter() {
         <Route path={PATHS.home} element={<HomePage />} />
         <Route path={PATHS.login} element={<LoginPage />} />
         <Route path={PATHS.register} element={<RegisterPage />} />
+        <Route path={PATHS.ask} element={<ProtectedRoute element={<AskPage />} />} />
         <Route
           path={PATHS.documents}
           element={<ProtectedRoute element={<DocumentsPage />} requireEmployee />}
+        />
+        <Route
+          path={PATHS.access}
+          element={<ProtectedRoute element={<AccessPage />} requireEmployee />}
         />
         <Route
           path={PATHS.admin}

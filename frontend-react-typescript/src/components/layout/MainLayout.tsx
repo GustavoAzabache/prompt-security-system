@@ -1,12 +1,14 @@
 import { Link, Outlet } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { PATHS } from '@/routes/paths';
+import { canUpdateDocuments } from '@/utils/jwt';
 
 const navLink =
   'rounded-md px-3 py-2 text-sm text-on-primary/90 hover:bg-white/10 hover:text-on-primary focus-visible:outline-2 focus-visible:outline-white';
 
 export function MainLayout() {
-  const { isAuthenticated, isEmployee, isDirector, logout } = useAuth();
+  const { isAuthenticated, isEmployee, isDirector, payload, logout } = useAuth();
+  const canUpdate = canUpdateDocuments(payload);
 
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
@@ -20,6 +22,14 @@ export function MainLayout() {
               {isEmployee && (
                 <Link to={PATHS.documents} className={navLink}>
                   Documents
+                </Link>
+              )}
+              <Link to={PATHS.ask} className={navLink}>
+                Ask
+              </Link>
+              {isEmployee && canUpdate && (
+                <Link to={PATHS.access} className={navLink}>
+                  Access
                 </Link>
               )}
               {isDirector && (

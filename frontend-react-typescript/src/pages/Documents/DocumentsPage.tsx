@@ -1,18 +1,18 @@
 import { useEffect, useState } from 'react';
+import { DocumentPreviewModal } from '@/components/common/DocumentPreviewModal';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
 import { useDocumentPreview } from '@/hooks/useDocumentPreview';
 import { useDocuments } from '@/hooks/useDocuments';
-import { ChangeConfidentialityForm } from './components/ChangeConfidentialityForm';
 import { DocumentList } from './components/DocumentList';
-import { DocumentPreviewModal } from './components/DocumentPreviewModal';
 import { UploadForm } from './components/UploadForm';
 
 export function DocumentsPage() {
   const { payload, isEmployee } = useAuth();
-  const { documents, listLoading, listError, refreshList } = useDocuments();
+  const { documents, listLoading, listError, page, hasMore, loadPage, refreshList } =
+    useDocuments();
   const preview = useDocumentPreview();
   const [uploadOpen, setUploadOpen] = useState(false);
 
@@ -55,13 +55,17 @@ export function DocumentsPage() {
         error={listError}
         onRetry={() => refreshList().catch(() => {})}
         onSelect={(doc) => void preview.open(doc)}
+        page={page}
+        hasMore={hasMore}
+        onPageChange={(p) => void loadPage(p).catch(() => {})}
       />
-
-      <ChangeConfidentialityForm />
 
       {uploadOpen && (
         <Modal title="Upload document" onClose={() => setUploadOpen(false)}>
-          <UploadForm onUploaded={() => setUploadOpen(false)} />
+          <UploadForm
+            onUploaded={() => refreshList().catch(() => {})}
+            onClose={() => setUploadOpen(false)}
+          />
         </Modal>
       )}
 

@@ -1,10 +1,14 @@
-import { Link } from 'react-router-dom';
+import { Link, Navigate } from 'react-router-dom';
 import { Card } from '@/components/ui/Card';
 import { useAuth } from '@/hooks/useAuth';
 import { PATHS } from '@/routes/paths';
 
 export function HomePage() {
-  const { isAuthenticated, isEmployee, payload } = useAuth();
+  const { isAuthenticated, isEmployee } = useAuth();
+
+  if (isAuthenticated && isEmployee) {
+    return <Navigate to={PATHS.documents} replace />;
+  }
 
   return (
     <section className="flex flex-col gap-6">
@@ -12,24 +16,16 @@ export function HomePage() {
         <h1 className="text-3xl font-semibold text-foreground sm:text-4xl">Prompt Security System</h1>
         <p className="max-w-2xl text-base leading-6 text-muted-foreground">
           Secure document upload with confidentiality control. Employees manage files; external
-          users have no document dashboard.
+          users can ask questions over PUBLIC documents.
         </p>
       </div>
       <Card className="flex flex-col gap-3 p-6">
         {isAuthenticated ? (
           <>
-            <p className="text-sm text-foreground">
-              Signed in{isEmployee ? ` · area ${payload?.area ?? '—'} · ${payload?.hierarchy ?? '—'}` : ' · external user'}.
-            </p>
-            {isEmployee ? (
-              <Link to={PATHS.documents} className="text-sm font-medium text-secondary underline">
-                Go to documents
-              </Link>
-            ) : (
-              <p className="text-sm text-muted-foreground">
-                External accounts cannot access documents. This home page is your landing page.
-              </p>
-            )}
+            <p className="text-sm text-foreground">Signed in · external user.</p>
+            <Link to={PATHS.ask} className="text-sm font-medium text-secondary underline">
+              Ask the documents
+            </Link>
           </>
         ) : (
           <>

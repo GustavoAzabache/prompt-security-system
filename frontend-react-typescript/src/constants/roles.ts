@@ -14,3 +14,5 @@ export const CONFIDENTIALITY_LEVELS = [
 ] as const;
 
 export const TYPE_DOCUMENTS = ['PDF', 'DOCX', 'XLSX', 'TXT'] as const;
+
+export const DOCUMENTS_PAGE_SIZE = 10;

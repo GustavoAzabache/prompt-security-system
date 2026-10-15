@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
+import { DOCUMENTS_PAGE_SIZE } from '@/constants/roles';
 import { documentService } from '@/services/documentService';
 import type {
   ChangeConfidentialityRequest,
@@ -14,12 +15,16 @@ export function useDocuments() {
   const [documents, setDocuments] = useState<DocumentListItem[]>([]);
   const [listLoading, setListLoading] = useState(false);
   const [listError, setListError] = useState<string | null>(null);
+  const [page, setPage] = useState(0);
+  const pageRef = useRef(0);
 
-  const refreshList = useCallback(async () => {
+  const loadPage = useCallback(async (pageToLoad: number) => {
+    pageRef.current = pageToLoad;
+    setPage(pageToLoad);
     setListLoading(true);
     setListError(null);
     try {
-      const data = await documentService.list();
+      const data = await documentService.list(pageToLoad);
       setDocuments(data);
       return data;
     } catch {
@@ -29,6 +34,8 @@ export function useDocuments() {
       setListLoading(false);
     }
   }, []);
+
+  const refreshList = useCallback(() => loadPage(pageRef.current), [loadPage]);
 
   const upload = useCallback(
     async (file: File) => {
@@ -74,6 +81,9 @@ export function useDocuments() {
     documents,
     listLoading,
     listError,
+    page,
+    hasMore: documents.length === DOCUMENTS_PAGE_SIZE,
+    loadPage,
     refreshList,
   };
 }

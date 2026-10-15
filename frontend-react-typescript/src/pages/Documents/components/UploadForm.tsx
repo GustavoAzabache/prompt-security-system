@@ -5,12 +5,21 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { FormError } from '@/components/ui/FormError';
 import { useDocuments } from '@/hooks/useDocuments';
+import { useRag } from '@/hooks/useRag';
 import { uploadDocumentSchema } from '@/schemas/document.schema';
 
-export function UploadForm({ onUploaded }: { onUploaded?: () => void }) {
+interface UploadFormProps {
+  onUploaded?: () => void;
+  onClose?: () => void;
+}
+
+export function UploadForm({ onUploaded, onClose }: UploadFormProps) {
   const { upload, loading } = useDocuments();
+  const { ingest, ingesting } = useRag();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [uploadedId, setUploadedId] = useState<string | null>(null);
+  const [ingestMsg, setIngestMsg] = useState<string | null>(null);
   const [inputKey, setInputKey] = useState(0);
   const {
     control,
@@ -25,16 +34,33 @@ export function UploadForm({ onUploaded }: { onUploaded?: () => void }) {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     setSuccess(null);
+    setIngestMsg(null);
     try {
       const data = await upload(values.file);
       setSuccess(`${data.name} (${data.type}, ${data.size} bytes)`);
+      setUploadedId(data.id);
       reset({ file: undefined as unknown as File });
       setInputKey((k) => k + 1);
       onUploaded?.();
     } catch {
-      setSubmitError('Upload failed. Only employees can upload.');
+      setSubmitError('Upload failed. Only employees can upload PDF files.');
     }
   });
+
+  const onIndexNow = async () => {
+    if (!uploadedId) return;
+    setIngestMsg(null);
+    try {
+      const data = await ingest(uploadedId, false);
+      setIngestMsg(
+        data.status === 'ALREADY_INDEXED'
+          ? 'Already indexed. No quota spent.'
+          : `Indexed: ${data.chunkCount} chunks.`,
+      );
+    } catch {
+      setIngestMsg('Indexing failed.');
+    }
+  };
 
   return (
     <Card className="p-6">
@@ -43,7 +69,7 @@ export function UploadForm({ onUploaded }: { onUploaded?: () => void }) {
         <FormError message={submitError} />
         <div className="flex flex-col gap-1.5">
           <label htmlFor="file" className="text-sm font-medium text-foreground">
-            File (PDF, DOCX, XLSX, TXT · max 10MB)
+            File (PDF only · max 10MB)
           </label>
           <Controller
             name="file"
@@ -53,7 +79,7 @@ export function UploadForm({ onUploaded }: { onUploaded?: () => void }) {
                 key={inputKey}
                 id="file"
                 type="file"
-                accept=".pdf,.docx,.xlsx,.txt"
+                accept=".pdf"
                 ref={ref}
                 onBlur={onBlur}
                 onChange={(e) => onChange(e.target.files?.[0])}
@@ -72,7 +98,22 @@ export function UploadForm({ onUploaded }: { onUploaded?: () => void }) {
         <Button type="submit" disabled={loading}>
           {loading ? 'Uploading…' : 'Upload'}
         </Button>
-        {success && <p className="text-sm text-accent">{success}</p>}
+        {success && (
+          <div className="flex flex-col gap-2">
+            <p className="text-sm text-accent">{success}</p>
+            <div className="flex flex-wrap gap-2">
+              <Button type="button" variant="secondary" disabled={ingesting} onClick={onIndexNow}>
+                {ingesting ? 'Indexing…' : 'Index now'}
+              </Button>
+              {onClose && (
+                <Button type="button" variant="ghost" onClick={onClose}>
+                  Close
+                </Button>
+              )}
+            </div>
+            {ingestMsg && <p className="text-sm text-accent">{ingestMsg}</p>}
+          </div>
+        )}
       </form>
     </Card>
   );
