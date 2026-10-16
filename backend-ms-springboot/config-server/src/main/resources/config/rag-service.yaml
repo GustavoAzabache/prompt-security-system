@@ -50,3 +50,9 @@ spring:
       resourceserver:
         jwt:
           public-key-location: classpath:certs/public.pem
+
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: rabbit
+    password: rabbit

@@ -30,6 +30,7 @@ import com.me.microservices.document_service.document.validator.DocumentValidato
 import com.me.microservices.document_service.document.validator.DocumentValidatorFactory;
 import com.me.microservices.document_service.document.validator.detector.DocumentTypeDetector;
 import com.me.microservices.document_service.document.validator.detector.DocumentTypeResolver;
+import com.me.microservices.document_service.messaging.publisher.DocumentEventPublisher;
 import com.me.microservices.document_service.storage.FileStorageService;
 import com.me.microservices.document_service.storage.dto.StoredFile;
 
@@ -45,6 +46,7 @@ public class DocumentService {
     private final DocumentValidatorFactory documentValidatorFactory;
     private final DocumentMapper documentMapper;
     private final FileStorageService fileStorageService;
+    private final DocumentEventPublisher documentEventPublisher;
 
     public List<DocumentResponse> getAll(Pageable pageable, EmployeeData employeeData) {
         return documentRepository.findAll(pageable).stream()
@@ -143,6 +145,8 @@ public class DocumentService {
         String currentConfidentality = entity.getConfidentialityLevel().name();
 
         entity = documentRepository.save(entity);
+
+        documentEventPublisher.confidentialityChanged(entity.getId(), entity.getConfidentialityLevel().name());
 
         return new ChangeConfidentialityResponse(
             "The document's confidentiality level has been changed from " + oldConfidentality + " to " + currentConfidentality + "."
