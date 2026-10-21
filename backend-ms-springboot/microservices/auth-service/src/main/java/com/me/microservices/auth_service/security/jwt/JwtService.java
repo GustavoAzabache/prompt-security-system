@@ -17,12 +17,13 @@ public class JwtService {
     private final JwtProperties jwtProperties;
     private final JwtKeyProvider jwtKeyProvider;
 
-    public String generateExternalAccessToken(String userId) {
+    public String generateExternalAccessToken(String userId, String jti) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationAccess());
 
         return Jwts.builder()
                 .subject(userId)
+                .id(jti)
                 .claim("token_type", "access")
                 .issuedAt(now)
                 .expiration(expiryDate)
@@ -31,12 +32,13 @@ public class JwtService {
                 .compact();
     }
 
-    public String generateEmployeeAccessToken(String userId, String area, String hierarchy) {
+    public String generateEmployeeAccessToken(String userId, String area, String hierarchy, String jti) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationAccess());
 
         return Jwts.builder()
                 .subject(userId)
+                .id(jti)
                 .claim("token_type", "access")
                 .claim("area", area)
                 .claim("hierarchy", hierarchy)
@@ -47,12 +49,13 @@ public class JwtService {
                 .compact();
     }
 
-    public String generateRefreshToken(String userId) {
+    public String generateRefreshToken(String userId, String jti) {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationRefresh());
 
         return Jwts.builder()
                 .subject(userId)
+                .id(jti)
                 .claim("token_type", "refresh")
                 .issuedAt(now)
                 .expiration(expiryDate)

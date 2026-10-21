@@ -17,6 +17,10 @@ import com.me.microservices.auth_service.external.dto.request.RegisterExternalRe
 import com.me.microservices.auth_service.external.entity.ExternalUserEntity;
 import com.me.microservices.auth_service.external.repository.ExternalUserRepository;
 import com.me.microservices.auth_service.security.jwt.JwtService;
+import com.me.microservices.auth_service.session.entity.AuthSessionEntity;
+import com.me.microservices.auth_service.session.entity.enums.SessionUserType;
+import com.me.microservices.auth_service.session.exception.SessionNotFoundException;
+import com.me.microservices.auth_service.session.service.AuthSessionService;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +33,7 @@ public class ExternalUserService {
     private final ExternalUserRepository externalUserRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AuthSessionService authSessionService;
 
     public AuthenticationResponse register(RegisterExternalRequest request) {
         String cleanEmail = request.email().trim().toLowerCase();
@@ -46,13 +51,16 @@ public class ExternalUserService {
             )
         );
 
+        AuthSessionEntity session = authSessionService.create(entity.getId(), SessionUserType.EXTERNAL);
+        String jti = session.getId().toString();
+
         return new AuthenticationResponse(
-            jwtService.generateExternalAccessToken(entity.getId().toString()),
-            jwtService.generateRefreshToken(entity.getId().toString())
+            jwtService.generateExternalAccessToken(entity.getId().toString(), jti),
+            jwtService.generateRefreshToken(entity.getId().toString(), jti)
         );
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthenticationResponse login(LoginRequest request) {
         String cleanEmail = request.email().trim().toLowerCase();
         ExternalUserEntity entity = externalUserRepository.findByEmail(cleanEmail)
@@ -62,9 +70,12 @@ public class ExternalUserService {
             throw new IncorrectCredentialException("Incorrect email or password");
         }
 
+        AuthSessionEntity session = authSessionService.create(entity.getId(), SessionUserType.EXTERNAL);
+        String jti = session.getId().toString();
+
         return new AuthenticationResponse(
-            jwtService.generateExternalAccessToken(entity.getId().toString()),
-            jwtService.generateRefreshToken(entity.getId().toString())
+            jwtService.generateExternalAccessToken(entity.getId().toString(), jti),
+            jwtService.generateRefreshToken(entity.getId().toString(), jti)
         );
     }
 
@@ -72,12 +83,22 @@ public class ExternalUserService {
     public RenewalAccessTokenResponse refresh(RenewalAccessTokenRequest request) {
         Claims claims = jwtService.validateRefreshToken(request.refreshToken());
 
+        authSessionService.requireActive(parseJti(claims.getId()));
+
         ExternalUserEntity entity = externalUserRepository.findById(UUID.fromString(claims.getSubject()))
                                          .orElseThrow(() -> new UserNotFoundException("User not found"));
 
         return new RenewalAccessTokenResponse(
-            jwtService.generateExternalAccessToken(entity.getId().toString())
+            jwtService.generateExternalAccessToken(entity.getId().toString(), claims.getId())
         );
+    }
+
+    private UUID parseJti(String jti) {
+        try {
+            return UUID.fromString(jti);
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            throw new SessionNotFoundException("Invalid session");
+        }
     }
 
 }

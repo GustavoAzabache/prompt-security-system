@@ -25,6 +25,10 @@ import com.me.microservices.auth_service.employee.entity.EmployeeEntity;
 import com.me.microservices.auth_service.employee.entity.enums.HierarchyLevel;
 import com.me.microservices.auth_service.employee.repository.EmployeeRepository;
 import com.me.microservices.auth_service.security.jwt.JwtService;
+import com.me.microservices.auth_service.session.entity.AuthSessionEntity;
+import com.me.microservices.auth_service.session.entity.enums.SessionUserType;
+import com.me.microservices.auth_service.session.exception.SessionNotFoundException;
+import com.me.microservices.auth_service.session.service.AuthSessionService;
 
 import io.jsonwebtoken.Claims;
 import lombok.RequiredArgsConstructor;
@@ -38,6 +42,7 @@ public class EmployeeService {
     private final AreaRepository areaRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final AuthSessionService authSessionService;
 
     public AuthenticationResponse register(RegisterEmployeeRequest request) {
         String cleanEmail = request.email().trim().toLowerCase();
@@ -58,18 +63,22 @@ public class EmployeeService {
                 passwordEncoder.encode(request.password())
             )
         );
+        
+        AuthSessionEntity session = authSessionService.create(entity.getId(), SessionUserType.EMPLOYEE);
+        String jti = session.getId().toString();
 
         return new AuthenticationResponse(
             jwtService.generateEmployeeAccessToken(
                 entity.getId().toString(),
                 entity.getArea().getName(),
-                entity.getHierarchy().name()
+                entity.getHierarchy().name(),
+                jti
             ),
-            jwtService.generateRefreshToken(entity.getId().toString())
+            jwtService.generateRefreshToken(entity.getId().toString(), jti)
         );
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public AuthenticationResponse login(LoginRequest request) {
         String cleanEmail = request.email().trim().toLowerCase();
         EmployeeEntity entity = employeeRepository.findByEmail(cleanEmail)
@@ -78,20 +87,26 @@ public class EmployeeService {
         if (!passwordEncoder.matches(request.password(), entity.getPasswordHash())) {
             throw new IncorrectCredentialException("Incorrect email or password");
         }
+        
+        AuthSessionEntity session = authSessionService.create(entity.getId(), SessionUserType.EMPLOYEE);
+        String jti = session.getId().toString();
 
         return new AuthenticationResponse(
             jwtService.generateEmployeeAccessToken(
                 entity.getId().toString(),
                 entity.getArea().getName(),
-                entity.getHierarchy().name()
+                entity.getHierarchy().name(),
+                jti
             ),
-            jwtService.generateRefreshToken(entity.getId().toString())
+            jwtService.generateRefreshToken(entity.getId().toString(), jti)
         );
     }
 
     @Transactional(readOnly = true)
     public RenewalAccessTokenResponse refresh(RenewalAccessTokenRequest request) {
         Claims claims = jwtService.validateRefreshToken(request.refreshToken());
+
+        authSessionService.requireActive(parseJti(claims.getId()));
 
         EmployeeEntity entity = employeeRepository.findById(UUID.fromString(claims.getSubject()))
                                     .orElseThrow(() -> new UserNotFoundException("User not found"));
@@ -100,9 +115,18 @@ public class EmployeeService {
             jwtService.generateEmployeeAccessToken(
                 entity.getId().toString(),
                 entity.getArea().getName(),
-                entity.getHierarchy().name()
+                entity.getHierarchy().name(),
+                claims.getId()                
             )
         );
+    }
+
+    private UUID parseJti(String jti) {
+        try {
+            return UUID.fromString(jti);
+        } catch (IllegalArgumentException | NullPointerException exception) {
+            throw new SessionNotFoundException("Invalid session");
+        }
     }
 
     public PromoteEmployeeResponse promote(UUID id) {

@@ -65,6 +65,21 @@ public class IngestService {
         return Boolean.TRUE.equals(exists);
     }
 
+    public void updateConfidentiality(UUID id, String confidentialityLevel) {
+        try {
+            jdbcTemplate.update(
+                "UPDATE " + vectorTable
+                    + " SET metadata = (jsonb_set(metadata::jsonb, '{confidentialityLevel}', to_jsonb(?::text)))::json"
+                    + " WHERE metadata ->> 'documentId' = ?",
+                confidentialityLevel,
+                id.toString()
+            );
+        } catch (RuntimeException exception) {
+            throw new VectorStoreException(
+                "Could not update confidentiality metadata for document " + id + ": " + exception.getMessage());
+        }
+    }
+
     private DocumentMetadata fetchMetadata(UUID id, String authorization) {
         try {
             return documentClient.getMetadata(id, authorization);

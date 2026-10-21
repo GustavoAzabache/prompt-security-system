@@ -50,6 +50,20 @@ services:
       start_period: 20s
     restart: on-failure
 
+  redis:
+    image: redis:8-alpine
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    ports:
+      - "${REDIS_PORT}:6379"
+    volumes:
+      - redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: on-failure
+
   config-server:
     build:
       context: .
@@ -92,6 +106,8 @@ services:
         condition: service_healthy
       discovery-server:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       auth-service:
         condition: service_healthy
       document-service:
@@ -101,6 +117,9 @@ services:
     environment:
       - SPRING_CONFIG_IMPORT=configserver:http://config-server:8888
       - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-server:8761/eureka/
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://api-gateway:8080/actuator/health"]
       interval: 20s
@@ -117,6 +136,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       config-server:
         condition: service_healthy
       discovery-server:
@@ -128,6 +149,9 @@ services:
       - SPRING_DATASOURCE_USERNAME=${POSTGRESQL_DB_USERNAME}
       - SPRING_DATASOURCE_PASSWORD=${POSTGRESQL_DB_PASSWORD}
       - SPRING_JPA_HIBERNATE_DDL_AUTO=validate
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://auth-service:8081/actuator/health"]
       interval: 20s
@@ -141,8 +165,12 @@ services:
       dockerfile: ./microservices/document-service/Dockerfile
     ports:
       - "${DOCUMENT_SERVICE_PORT}:8082"
+    volumes:
+      - ./storage/documents:/app/storage/documents
     depends_on:
       mongodb:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
@@ -160,6 +188,9 @@ services:
       - SPRING_RABBITMQ_PORT=${RABBITMQ_PORT}
       - SPRING_RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
       - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
     restart: on-failure
 
   postgres-rag:
@@ -189,6 +220,8 @@ services:
     depends_on:
       postgres-rag:
         condition: service_healthy
+      redis:
+        condition: service_healthy
       rabbitmq:
         condition: service_healthy
       config-server:
@@ -208,6 +241,9 @@ services:
       - SPRING_RABBITMQ_PORT=${RABBITMQ_PORT}
       - SPRING_RABBITMQ_USERNAME=${RABBITMQ_USERNAME}
       - SPRING_RABBITMQ_PASSWORD=${RABBITMQ_PASSWORD}
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
+      - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
     restart: on-failure
 
 
@@ -216,3 +252,4 @@ volumes:
   mongo-data:
   pgvector-data:
   rabbitmq-data:
+  redis-data:

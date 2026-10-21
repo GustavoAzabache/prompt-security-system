@@ -18,6 +18,6 @@ public class ConfidentialityChangedListener {
 
     @RabbitListener(queues = "document.confidentiality-changed")
     public void onMessage(DocumentConfidentialityChanged event) {
-        ingestService.ingest(UUID.fromString(event.documentId()), null, true);
+        ingestService.updateConfidentiality(UUID.fromString(event.documentId()), event.currentConfidentialityLevel());
     }
 }

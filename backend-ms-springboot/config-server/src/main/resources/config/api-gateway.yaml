@@ -16,6 +16,12 @@ spring:
         jwt:
           public-key-location: classpath:certs/public.pem
 
+  data:
+    redis:
+      host: localhost
+      port: 6379
+      password: redis
+
   cloud:
     gateway:
       server:

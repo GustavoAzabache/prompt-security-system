@@ -9,6 +9,9 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import com.me.microservices.auth_service.area.exception.AreaNotFoundException;
+import com.me.microservices.auth_service.security.exception.InvalidTokenTypeException;
+import com.me.microservices.auth_service.session.exception.SessionNotFoundException;
+import com.me.microservices.auth_service.session.exception.SessionRevokedException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -70,6 +73,36 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(IncorrectCredentialException.class)
     public ResponseEntity<ErrorResponse> handler(IncorrectCredentialException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+            ErrorResponse.of(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage()
+            )
+        );
+    }
+
+    @ExceptionHandler(SessionRevokedException.class)
+    public ResponseEntity<ErrorResponse> handler(SessionRevokedException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+            ErrorResponse.of(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage()
+            )
+        );
+    }
+
+    @ExceptionHandler(SessionNotFoundException.class)
+    public ResponseEntity<ErrorResponse> handler(SessionNotFoundException exception) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
+            ErrorResponse.of(
+                HttpStatus.UNAUTHORIZED,
+                exception.getMessage()
+            )
+        );
+    }
+
+    @ExceptionHandler(InvalidTokenTypeException.class)
+    public ResponseEntity<ErrorResponse> handler(InvalidTokenTypeException exception) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(
             ErrorResponse.of(
                 HttpStatus.UNAUTHORIZED,
