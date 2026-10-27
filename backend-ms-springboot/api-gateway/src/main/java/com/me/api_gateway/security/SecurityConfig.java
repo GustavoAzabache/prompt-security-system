@@ -55,9 +55,11 @@ public class SecurityConfig {
                     .pathMatchers(HttpMethod.POST,
                             "/api/v1/auth/employees/login",
                             "/api/v1/auth/employees/refresh",
-                            "/api/v1/auth/external-users/refresh",
+                            "/api/v1/auth/external-users/register",
                             "/api/v1/auth/external-users/login",
-                            "/api/v1/auth/external-users/register").permitAll()
+                            "/api/v1/auth/external-users/refresh",
+                            "/api/v1/auth/clients/login"
+                    ).permitAll()
                     .anyExchange().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))

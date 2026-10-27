@@ -9,6 +9,7 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.mongodb.core.mapping.Document;
 
 import com.me.microservices.document_service.document.entity.enums.ConfidentialityLevel;
+import com.me.microservices.document_service.document.entity.enums.DocumentStatus;
 import com.me.microservices.document_service.document.entity.enums.TypeDocument;
 
 import lombok.AccessLevel;
@@ -40,6 +41,8 @@ public class DocumentEntity {
     private String hierarchy;
 
     private ConfidentialityLevel confidentialityLevel;
+    
+    private DocumentStatus status;
 
     @CreatedDate 
     private LocalDateTime createdAt;
@@ -55,8 +58,7 @@ public class DocumentEntity {
         String mediaType,
         String location,
         String area,
-        String hierarchy,
-        ConfidentialityLevel confidentialityLevel
+        String hierarchy
     ) {
         LocalDateTime now = LocalDateTime.now();
 
@@ -69,7 +71,8 @@ public class DocumentEntity {
             location,
             area,
             hierarchy,
-            confidentialityLevel,
+            ConfidentialityLevel.PRIVATE_ONLY_AREA,
+            DocumentStatus.PENDING,
             now,
             now
         );
@@ -80,6 +83,14 @@ public class DocumentEntity {
         if (this.confidentialityLevel == confidentialityLevel) return;
 
         this.confidentialityLevel = confidentialityLevel;
+    }
+
+    public void accept() {
+        this.status = DocumentStatus.READY;
+    }
+
+    public void reject() {
+        this.status = DocumentStatus.REJECTED;
     }
 
 }

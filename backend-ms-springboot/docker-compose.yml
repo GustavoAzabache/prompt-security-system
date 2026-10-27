@@ -152,6 +152,8 @@ services:
       - SPRING_DATA_REDIS_HOST=redis
       - SPRING_DATA_REDIS_PORT=${REDIS_PORT}
       - SPRING_DATA_REDIS_PASSWORD=${REDIS_PASSWORD}
+      - CLIENTS_CONTENT_INTEGRITY_NAME=${CONTENT_INTEGRITY_NAME}
+      - CLIENTS_CONTENT_INTEGRITY_PASSWORD=${CONTENT_INTEGRITY_PASSWORD}
     healthcheck:
       test: ["CMD", "curl", "-f", "http://auth-service:8081/actuator/health"]
       interval: 20s

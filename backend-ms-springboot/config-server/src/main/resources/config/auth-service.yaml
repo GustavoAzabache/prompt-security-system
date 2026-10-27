@@ -29,4 +29,10 @@ jwt:
   public-key: classpath:certs/public.pem
   expiration-access: 3600000
   expiration-refresh: 86400000
+  expiration-client: 3600000
   issuer: prompt_sec_auth_ms
+
+clients:
+  content-integrity:
+    name: ${CLIENTS_CONTENT_INTEGRITY_NAME}
+    password: ${CLIENTS_CONTENT_INTEGRITY_PASSWORD}

@@ -45,6 +45,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(
                     auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/documents/internal/{id}/content").hasAuthority("SCOPE_documents:scan")
                         .anyRequest().authenticated()
                 )
                 .oauth2ResourceServer(oauth2 -> oauth2.jwt(Customizer.withDefaults()))

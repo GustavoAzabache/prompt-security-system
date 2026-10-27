@@ -19,13 +19,16 @@ import com.me.microservices.document_service.document.dto.response.ChangeConfide
 import com.me.microservices.document_service.document.dto.response.DocumentResponse;
 import com.me.microservices.document_service.document.dto.response.UploadDocumentResponse;
 import com.me.microservices.document_service.document.entity.DocumentEntity;
+import com.me.microservices.document_service.document.entity.RejectedDocumentEntity;
 import com.me.microservices.document_service.document.entity.enums.ConfidentialityLevel;
+import com.me.microservices.document_service.document.entity.enums.DocumentStatus;
 import com.me.microservices.document_service.document.entity.enums.TypeDocument;
 import com.me.microservices.document_service.document.exception.DocumentNotFoundException;
 import com.me.microservices.document_service.document.exception.DocumentStorageException;
 import com.me.microservices.document_service.document.exception.ForbiddenDocumentUpdateException;
 import com.me.microservices.document_service.document.mapper.DocumentMapper;
 import com.me.microservices.document_service.document.repository.DocumentRepository;
+import com.me.microservices.document_service.document.repository.RejectedDocumentRepository;
 import com.me.microservices.document_service.document.validator.DocumentValidator;
 import com.me.microservices.document_service.document.validator.DocumentValidatorFactory;
 import com.me.microservices.document_service.document.validator.detector.DocumentTypeDetector;
@@ -41,6 +44,7 @@ import lombok.RequiredArgsConstructor;
 public class DocumentService {
 
     private final DocumentRepository documentRepository;
+    private final RejectedDocumentRepository rejectedDocumentRepository;
     private final DocumentTypeDetector documentTypeDetector;
     private final DocumentTypeResolver documentTypeResolver;
     private final DocumentValidatorFactory documentValidatorFactory;
@@ -118,10 +122,11 @@ public class DocumentService {
                 mimeType,
                 storedFile.location(),
                 employeeData.area(),
-                employeeData.hierarchy(),
-                ConfidentialityLevel.PRIVATE_ONLY_AREA
+                employeeData.hierarchy()
             )
         );
+
+        documentEventPublisher.documentUploaded(entity.getId(), entity.getTitle());
         
         return new UploadDocumentResponse(
             entity.getId(),
@@ -154,6 +159,10 @@ public class DocumentService {
     }
 
     private void canChangeConfidentiality(DocumentEntity entity, EmployeeData employeeData) {
+        if (entity.getStatus() != DocumentStatus.READY) {
+            throw new ForbiddenDocumentUpdateException("The document hasn't ready yet");
+        }
+        
         if (entity.getConfidentialityLevel() == ConfidentialityLevel.CONFIDENTIAL
             && !employeeData.hierarchy().equals("DIRECTOR")
         ) {
@@ -173,6 +182,10 @@ public class DocumentService {
     }
 
     private boolean canRead(DocumentEntity entity, EmployeeData employeeData) {
+        if (entity.getStatus() != DocumentStatus.READY) {
+            return false;
+        }
+        
         return switch (entity.getConfidentialityLevel()) {
             // PUBLIC se lista a cualquier empleado: el controller ya rechazó
             // a externos (sin claim "area") antes de llegar aquí.
@@ -182,4 +195,27 @@ public class DocumentService {
             case CONFIDENTIAL -> "DIRECTOR".equals(employeeData.hierarchy());
         };
     }
+
+    public void acceptDocument(String id, String filename) {
+        DocumentEntity document = findDocumentById(UUID.fromString(id));
+        document.accept();
+
+        documentRepository.save(document);
+
+        // logica websockets para avisar a mi frontend que el documento ya está listo usando filename
+    }
+
+    public void rejectDocument(String id, String filename, List<String> findings) {
+        DocumentEntity document = findDocumentById(UUID.fromString(id));
+        document.reject();
+
+        rejectedDocumentRepository.save(
+            RejectedDocumentEntity.create(document.getId(), document.getTitle(), findings)
+        );
+
+        documentRepository.save(document);
+
+        // logica websockets para avisar a mi frontend que el documento ha sido rechazado usando filename
+    }
+
 }

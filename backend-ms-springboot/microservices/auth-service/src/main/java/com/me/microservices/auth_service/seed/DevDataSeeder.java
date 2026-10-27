@@ -9,6 +9,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.me.microservices.auth_service.area.entity.Area;
 import com.me.microservices.auth_service.area.repository.AreaRepository;
+import com.me.microservices.auth_service.client.entity.ClientEntity;
+import com.me.microservices.auth_service.client.props.ContentIntegrityProps;
+import com.me.microservices.auth_service.client.repository.ClientRepository;
 import com.me.microservices.auth_service.employee.entity.EmployeeEntity;
 import com.me.microservices.auth_service.employee.repository.EmployeeRepository;
 import com.me.microservices.auth_service.external.entity.ExternalUserEntity;
@@ -34,6 +37,9 @@ public class DevDataSeeder implements CommandLineRunner {
     private final ExternalUserRepository externalUserRepository;
     private final AreaRepository areaRepository;
     private final PasswordEncoder passwordEncoder;
+
+    private final ContentIntegrityProps contentIntegrityProps;
+    private final ClientRepository clientRepository;
 
     @Override
     @Transactional
@@ -66,6 +72,8 @@ public class DevDataSeeder implements CommandLineRunner {
 
         log.warn("DevDataSeeder TEMPORAL activo: usuarios demo con password '{}'. Eliminar antes de producción.",
                 DEV_PASSWORD);
+
+        seedClients(contentIntegrityProps.getName(), passwordEncoder.encode(contentIntegrityProps.getPassword()));
     }
 
     private void seedEmployee(String email, String firstName, String lastName, Area area, int promotions) {
@@ -80,5 +88,16 @@ public class DevDataSeeder implements CommandLineRunner {
         }
         employeeRepository.save(entity);
         log.info("DevDataSeeder: creado {} ({} promociones)", email, promotions);
+    }
+
+    private void seedClients(String name, String password) {
+        if (clientRepository.existsByName(name)) {
+            log.info(name + " ya existe, se omite");
+        } else {
+            clientRepository.save(
+                ClientEntity.create(name, password)
+            );
+            log.info("DevDataSeeder: creado " + name);
+        }
     }
 }

@@ -1,6 +1,7 @@
 package com.me.microservices.auth_service.security.jwt;
 
 import java.util.Date;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 
@@ -42,6 +43,23 @@ public class JwtService {
                 .claim("token_type", "access")
                 .claim("area", area)
                 .claim("hierarchy", hierarchy)
+                .issuedAt(now)
+                .expiration(expiryDate)
+                .issuer(jwtProperties.getIssuer())
+                .signWith(jwtKeyProvider.getPrivateKey())
+                .compact();
+    }
+
+    public String generateClientAccessToken(String clientId, String name, String scope) {
+        Date now = new Date();
+        Date expiryDate = new Date(now.getTime() + jwtProperties.getExpirationClient());
+
+        return Jwts.builder()
+                .subject(clientId)
+                .id(UUID.randomUUID().toString())
+                .claim("token_type", "access")
+                .claim("client", name)
+                .claim("scope", scope)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .issuer(jwtProperties.getIssuer())

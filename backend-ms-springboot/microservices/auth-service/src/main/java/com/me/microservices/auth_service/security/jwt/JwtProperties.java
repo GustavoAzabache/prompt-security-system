@@ -17,5 +17,6 @@ public class JwtProperties {
     private Resource publicKey;
     private long expirationAccess;
     private long expirationRefresh;
+    private long expirationClient;
     private String issuer;
 }
