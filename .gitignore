@@ -5,6 +5,7 @@
 # --- Secrets y env ---
 # Los .gitignore de Spring no ignoran esto. Incluye backend-ms-springboot/.env
 # (con GOOGLE_API_KEY) y frontend-react-typescript/.env
+env/
 .env
 .env.*
 **/.env
@@ -23,6 +24,7 @@ secrets/
 # Se crea por código en FileStorageService (Files.createDirectories),
 # por eso se ignora la carpeta completa, sin .gitkeep.
 backend-ms-springboot/microservices/document-service/storage/
+backend-ms-springboot/storage/
 **/uploads/
 **/uploaded-documents/
 *.pdf.orig
