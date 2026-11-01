@@ -1,5 +1,6 @@
 package com.me.microservices.document_service.document.service;
 
+import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
@@ -214,9 +215,19 @@ public class DocumentService {
     }
 
     private void rejectContentDocument(String id, List<String> findings) {
-        // logica para eliminar el archivo fisicamente
-        
         DocumentEntity document = findDocumentById(UUID.fromString(id));
+
+        String filePath = document.getLocation();
+        File file = new File(filePath);
+        if (file.exists() && file.isFile()) {
+            boolean deleted = file.delete();
+            if (deleted) {
+                System.out.println("[Reject] Archivo físico eliminado: " + filePath);
+            } else {
+                System.err.println("[Reject] No se pudo eliminar el archivo físico: " + filePath);
+            }
+        }
+
         document.toContentRejected();
 
         rejectedDocumentRepository.save(
