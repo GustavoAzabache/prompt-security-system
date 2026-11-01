@@ -16,12 +16,22 @@ public class CustomJwtAuthenticationConverter implements Converter<Jwt, Abstract
     public AbstractAuthenticationToken convert(Jwt jwt) {
         Collection<GrantedAuthority> authorities = new ArrayList<>();
 
+        // Claims de empleados (acceso con rol)
         if (jwt.hasClaim("area") && jwt.getClaimAsString("area") != null) {
             authorities.add(
                 new SimpleGrantedAuthority("ROLE_EMPLOYEE")
             );
         }
-        
+
+        // Claim de scope para tokens M2M (client_credentials)
+        // convierte "documents:scan" -> "SCOPE_documents:scan"
+        String scope = jwt.getClaimAsString("scope");
+        if (scope != null && !scope.isBlank()) {
+            for (String s : scope.split(" ")) {
+                authorities.add(new SimpleGrantedAuthority("SCOPE_" + s));
+            }
+        }
+
         return new JwtAuthenticationToken(jwt, authorities, jwt.getSubject());
     }
 

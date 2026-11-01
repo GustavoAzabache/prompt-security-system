@@ -26,13 +26,11 @@ class DocumentEventPublisher:
     def publish_document_result(
         self,
         document_id: str,
-        filename: str,
         accept: bool,
         findings: list | None = None
     ):
         payload = {
             "documentId": document_id,
-            "filename": filename,
             "accept": accept,
             "findings": findings or []
         }

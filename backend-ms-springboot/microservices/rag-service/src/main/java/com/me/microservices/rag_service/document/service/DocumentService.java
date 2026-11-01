@@ -33,5 +33,4 @@ public class DocumentService {
         return resource;
     }
 
-
 }

@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitPublisherConfig {
 
+    // Exchange para el evento de petición: document-service -> Worker en Python
     public static final String REQUEST_EXCHANGE_NAME = "document.exchange.request";
     
     @Bean

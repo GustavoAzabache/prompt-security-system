@@ -4,7 +4,6 @@ import java.util.List;
 
 public record DocumentScanResultEvent(
     String documentId,
-    String filename,
     boolean accept,
     List<String> findings
 ) {}

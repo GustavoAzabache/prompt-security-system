@@ -43,7 +43,6 @@ def document_orchestrator_controller(document_id: str, filename: str):
         
         event_publisher.publish_document_result(
             document_id=document_id,
-            filename=filename,
             accept=veredicto["is_valid"],
             findings=veredicto["findings"]
         )

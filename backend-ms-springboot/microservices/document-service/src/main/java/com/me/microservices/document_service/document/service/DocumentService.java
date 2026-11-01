@@ -34,6 +34,7 @@ import com.me.microservices.document_service.document.validator.DocumentValidato
 import com.me.microservices.document_service.document.validator.detector.DocumentTypeDetector;
 import com.me.microservices.document_service.document.validator.detector.DocumentTypeResolver;
 import com.me.microservices.document_service.messaging.events.DocumentScanResultEvent;
+import com.me.microservices.document_service.messaging.events.DocumentStatusChangedEvent;
 import com.me.microservices.document_service.messaging.publisher.DocumentEventPublisher;
 import com.me.microservices.document_service.storage.FileStorageService;
 import com.me.microservices.document_service.storage.dto.StoredFile;
@@ -160,7 +161,8 @@ public class DocumentService {
     }
 
     private void canChangeConfidentiality(DocumentEntity entity, EmployeeData employeeData) {
-        if (entity.getStatus() != DocumentStatus.READY) {
+        if (entity.getStatus() != DocumentStatus.CONTENT_READY_TO_READ
+            || entity.getStatus() != DocumentStatus.READY_TO_READ_AND_CONSULT) {
             throw new ForbiddenDocumentUpdateException("The document hasn't ready yet");
         }
         
@@ -182,7 +184,7 @@ public class DocumentService {
     }
 
     private boolean canRead(DocumentEntity entity, EmployeeData employeeData) {
-        if (entity.getStatus() != DocumentStatus.READY) return false;
+        if (entity.getStatus() != DocumentStatus.CONTENT_READY_TO_READ) return false;
         
         return switch (entity.getConfidentialityLevel()) {
             // PUBLIC se lista a cualquier empleado: el controller ya rechazó
@@ -194,31 +196,28 @@ public class DocumentService {
         };
     }
 
-    public void scanResult(DocumentScanResultEvent result) {
-        if (result.accept()) {
-            DocumentEntity document = findDocumentById(UUID.fromString(result.documentId()));
-            document.toIndexing();
-
-            documentRepository.save(document);
-
-            // logica para indexarlo (petición asíncrona a rag-service)
+    public void scanResult(DocumentScanResultEvent event) {
+        if (event.accept()) {
+            acceptContentDocument(event.documentId());
         } else {
-            rejectDocument(result.documentId(), result.filename(), result.findings());
+            rejectContentDocument(event.documentId(), event.findings());
         }
     }
 
-    public void acceptDocument(String id, String filename) {
+    private void acceptContentDocument(String id) {
         DocumentEntity document = findDocumentById(UUID.fromString(id));
-        document.toReady();
+        document.toContentReadyToRead();
 
         documentRepository.save(document);
 
-        // logica websockets para avisar a mi frontend que el documento ya está listo usando filename
+        // logica websockets para avisar a mi frontend que el documento ya está subido usando document.getTitle()
     }
 
-    private void rejectDocument(String id, String filename, List<String> findings) {
+    private void rejectContentDocument(String id, List<String> findings) {
+        // logica para eliminar el archivo fisicamente
+        
         DocumentEntity document = findDocumentById(UUID.fromString(id));
-        document.toRejected();
+        document.toContentRejected();
 
         rejectedDocumentRepository.save(
             RejectedDocumentEntity.create(document.getId(), document.getTitle(), findings)
@@ -226,7 +225,23 @@ public class DocumentService {
 
         documentRepository.save(document);
 
-        // logica websockets para avisar a mi frontend que el documento ha sido rechazado usando filename
+        // logica websockets para avisar a mi frontend que el documento ha sido rechazado usando document.getTitle()
+    }
+
+    public void changeStatus(DocumentStatusChangedEvent event) {
+        DocumentEntity document = findDocumentById(UUID.fromString(event.documentId()));
+
+        switch (event.statusChanged()) {
+            case "INDEXING" -> document.toIndexing();
+            case "READY_TO_READ_AND_CONSULT" -> {
+                // logica websockets para avisar a mi frontend que el documento ya puede ser consultado por el RAG
+                document.toReadyToReadAndConsult();
+            }
+            case "CONTENT_READY_TO_READ" -> document.toContentReadyToRead();
+            default -> document.toContentReadyToRead();
+        };
+
+        documentRepository.save(document);
     }
 
     private DocumentEntity findDocumentById(UUID id) {

@@ -24,6 +24,7 @@ import com.me.microservices.rag_service.ingest.dto.response.IngestDocumentRespon
 import com.me.microservices.rag_service.ingest.exception.DocumentTextExtractionException;
 import com.me.microservices.rag_service.ingest.exception.RemoteDocumentNotFoundException;
 import com.me.microservices.rag_service.ingest.exception.VectorStoreException;
+import com.me.microservices.rag_service.messaging.publisher.RagEventPublisher;
 
 import feign.FeignException;
 import lombok.RequiredArgsConstructor;
@@ -36,6 +37,7 @@ public class IngestService {
     private final DocumentService documentService;
     private final JdbcTemplate jdbcTemplate;
     private final VectorStore vectorStore;
+    private final RagEventPublisher ragEventPublisher;
 
     @Value("${spring.ai.vectorstore.pgvector.table-name:vector_store}")
     private String vectorTable;
@@ -47,13 +49,22 @@ public class IngestService {
             return new IngestDocumentResponse(id.toString(), "ALREADY_INDEXED", null, null, null);
         }
 
-        DocumentMetadata metadata = fetchMetadata(id, authorization);
-        Resource resource = documentService.getContent(id, authorization);
-        String text = extractText(resource, metadata);
-        List<Document> chunks = split(text, metadata);
-        store(chunks);
+        ragEventPublisher.changeStatus(id.toString(), "INDEXING");
 
-        return new IngestDocumentResponse(id.toString(), "INDEXED", metadata, text.length(), chunks.size());
+        try {
+            DocumentMetadata metadata = fetchMetadata(id, authorization);
+            Resource resource = documentService.getContent(id, authorization);
+            String text = extractText(resource, metadata);
+            List<Document> chunks = split(text, metadata);
+            store(chunks);
+
+            ragEventPublisher.changeStatus(id.toString(), "READY_TO_READ_AND_CONSULT");
+
+            return new IngestDocumentResponse(id.toString(), "INDEXED", metadata, text.length(), chunks.size());
+        } catch (Exception e) {
+            ragEventPublisher.changeStatus(id.toString(), "CONTENT_READY_TO_READ");
+            throw e;
+        }
     }
 
     public boolean isIndexed(UUID id) {
