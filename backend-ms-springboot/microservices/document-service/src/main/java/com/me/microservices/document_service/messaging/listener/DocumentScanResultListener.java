@@ -4,7 +4,8 @@ import org.springframework.amqp.rabbit.annotation.RabbitListener;
 import org.springframework.stereotype.Service;
 
 import com.me.microservices.document_service.document.service.DocumentService;
-import com.me.microservices.document_service.messaging.events.DocumentScanResult;
+import com.me.microservices.document_service.messaging.config.RabbitListenerConfig;
+import com.me.microservices.document_service.messaging.events.DocumentScanResultEvent;
 
 import lombok.RequiredArgsConstructor;
 
@@ -14,12 +15,8 @@ public class DocumentScanResultListener {
 
     private final DocumentService documentService;
 
-    @RabbitListener(queues = "document.scan.result.queue")
-    public void onMessage(DocumentScanResult event) {
-        if (event.accept()) {
-            documentService.acceptDocument(event.documentId(), event.filename());
-        } else {
-            documentService.rejectDocument(event.documentId(), event.filename(), event.findings());
-        }
+    @RabbitListener(queues = RabbitListenerConfig.DOCUMENT_SCAN_RESULT_QUEUE_NAME)
+    public void onMessage(DocumentScanResultEvent event) {
+        documentService.scanResult(event);
     }
 }

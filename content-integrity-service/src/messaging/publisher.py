@@ -4,12 +4,10 @@ import json
 class DocumentEventPublisher:
 
     def __init__(self):
-        self.exchange = "document.events.exchange"
-        self.queue = "document.scan.result.queue"
-        self.routing_key = "DOCUMENT_SCAN_RESULT"
+        self.exchange = "document.exchange.response"
+        self.routing_key = "document.event.scan-result"
 
         credentials = pika.PlainCredentials("rabbit", "rabbit")
-
         parameters = pika.ConnectionParameters(
             host="localhost",
             virtual_host="/",
@@ -21,19 +19,8 @@ class DocumentEventPublisher:
 
         self.channel.exchange_declare(
             exchange=self.exchange,
-            exchange_type="direct",
+            exchange_type="topic",
             durable=True
-        )
-
-        self.channel.queue_declare(
-            queue=self.queue,
-            durable=True
-        )
-
-        self.channel.queue_bind(
-            exchange=self.exchange,
-            queue=self.queue,
-            routing_key=self.routing_key
         )
 
     def publish_document_result(

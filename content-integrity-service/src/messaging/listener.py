@@ -6,19 +6,23 @@ def start_listener(callback_funcion):
     HOST = 'localhost'
     VIRTUAL_HOST = '/'
 
-    credenciales = pika.PlainCredentials(USUARIO, PASSWORD)
-    parametros = pika.ConnectionParameters(
+    credentials = pika.PlainCredentials(USUARIO, PASSWORD)
+    parameters = pika.ConnectionParameters(
         host=HOST,
         virtual_host=VIRTUAL_HOST,
-        credentials=credenciales
+        credentials=credentials
     )
 
-    # Conectar usando los parámetros con credenciales
-    conn = pika.BlockingConnection(parametros)
+    conn = pika.BlockingConnection(parameters)
     ch = conn.channel()
-    
-    COLA_OBJETIVO = 'document.scan.queue'
-    ch.queue_declare(queue=COLA_OBJETIVO, durable=True) 
+
+    EXCHANGE_PUBLISHER = 'document.exchange.request'
+    QUEUE_TARGET = 'document.queue.scan'
+    ROUTING_KEY = 'document.event.upload'
+
+    ch.exchange_declare(exchange=EXCHANGE_PUBLISHER, exchange_type='topic', durable=True)
+    ch.queue_declare(queue=QUEUE_TARGET, durable=True) 
+    ch.queue_bind(exchange=EXCHANGE_PUBLISHER, queue=QUEUE_TARGET, routing_key=ROUTING_KEY)
 
     def on_message(ch, method, props, body):
         try:
@@ -35,6 +39,6 @@ def start_listener(callback_funcion):
             ch.basic_nack(method.delivery_tag, requeue=False)
 
     # Escuchamos directamente de la cola gestionada por document-service
-    ch.basic_consume(COLA_OBJETIVO, on_message)
-    print(f" [*] Conectado con éxito. Escuchando la cola '{COLA_OBJETIVO}' de RabbitMQ...")
+    ch.basic_consume(QUEUE_TARGET, on_message)
+    print(f" [*] Conectado con éxito. Escuchando la cola '{QUEUE_TARGET}' de RabbitMQ...")
     ch.start_consuming()

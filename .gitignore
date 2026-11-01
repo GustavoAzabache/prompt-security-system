@@ -28,6 +28,7 @@ backend-ms-springboot/storage/
 **/uploads/
 **/uploaded-documents/
 *.pdf.orig
+bitacora/
 
 # --- Build outputs (global monorepo) ---
 **/target/
@@ -113,3 +114,6 @@ postgres-data/
 
 # --- Otros ---
 HELP.md
+
+**/__pycache__/
+*.pyc

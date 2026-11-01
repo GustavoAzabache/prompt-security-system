@@ -33,6 +33,7 @@ import com.me.microservices.document_service.document.validator.DocumentValidato
 import com.me.microservices.document_service.document.validator.DocumentValidatorFactory;
 import com.me.microservices.document_service.document.validator.detector.DocumentTypeDetector;
 import com.me.microservices.document_service.document.validator.detector.DocumentTypeResolver;
+import com.me.microservices.document_service.messaging.events.DocumentScanResultEvent;
 import com.me.microservices.document_service.messaging.publisher.DocumentEventPublisher;
 import com.me.microservices.document_service.storage.FileStorageService;
 import com.me.microservices.document_service.storage.dto.StoredFile;
@@ -126,7 +127,7 @@ public class DocumentService {
             )
         );
 
-        documentEventPublisher.documentUploaded(entity.getId(), entity.getTitle());
+        documentEventPublisher.upload(entity.getId(), entity.getTitle());
         
         return new UploadDocumentResponse(
             entity.getId(),
@@ -151,7 +152,7 @@ public class DocumentService {
 
         entity = documentRepository.save(entity);
 
-        documentEventPublisher.confidentialityChanged(entity.getId(), entity.getConfidentialityLevel().name());
+        // logica para cambiar la confidencialidad (petición síncrona a rag-service)
 
         return new ChangeConfidentialityResponse(
             "The document's confidentiality level has been changed from " + oldConfidentality + " to " + currentConfidentality + "."
@@ -180,15 +181,8 @@ public class DocumentService {
         }
     }
 
-    private DocumentEntity findDocumentById(UUID id) {
-        return documentRepository.findById(id.toString())
-                                    .orElseThrow(() -> new DocumentNotFoundException("The document with ID " + id + " doesn't exist."));
-    }
-
     private boolean canRead(DocumentEntity entity, EmployeeData employeeData) {
-        if (entity.getStatus() != DocumentStatus.READY) {
-            return false;
-        }
+        if (entity.getStatus() != DocumentStatus.READY) return false;
         
         return switch (entity.getConfidentialityLevel()) {
             // PUBLIC se lista a cualquier empleado: el controller ya rechazó
@@ -200,18 +194,31 @@ public class DocumentService {
         };
     }
 
+    public void scanResult(DocumentScanResultEvent result) {
+        if (result.accept()) {
+            DocumentEntity document = findDocumentById(UUID.fromString(result.documentId()));
+            document.toIndexing();
+
+            documentRepository.save(document);
+
+            // logica para indexarlo (petición asíncrona a rag-service)
+        } else {
+            rejectDocument(result.documentId(), result.filename(), result.findings());
+        }
+    }
+
     public void acceptDocument(String id, String filename) {
         DocumentEntity document = findDocumentById(UUID.fromString(id));
-        document.accept();
+        document.toReady();
 
         documentRepository.save(document);
 
         // logica websockets para avisar a mi frontend que el documento ya está listo usando filename
     }
 
-    public void rejectDocument(String id, String filename, List<String> findings) {
+    private void rejectDocument(String id, String filename, List<String> findings) {
         DocumentEntity document = findDocumentById(UUID.fromString(id));
-        document.reject();
+        document.toRejected();
 
         rejectedDocumentRepository.save(
             RejectedDocumentEntity.create(document.getId(), document.getTitle(), findings)
@@ -220,6 +227,11 @@ public class DocumentService {
         documentRepository.save(document);
 
         // logica websockets para avisar a mi frontend que el documento ha sido rechazado usando filename
+    }
+
+    private DocumentEntity findDocumentById(UUID id) {
+        return documentRepository.findById(id.toString())
+                                    .orElseThrow(() -> new DocumentNotFoundException("The document with ID " + id + " doesn't exist."));
     }
 
 }

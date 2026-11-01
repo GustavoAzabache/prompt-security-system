@@ -85,11 +85,15 @@ public class DocumentEntity {
         this.confidentialityLevel = confidentialityLevel;
     }
 
-    public void accept() {
+    public void toIndexing() {
+        this.status = DocumentStatus.INDEXING;
+    }
+
+    public void toReady() {
         this.status = DocumentStatus.READY;
     }
 
-    public void reject() {
+    public void toRejected() {
         this.status = DocumentStatus.REJECTED;
     }
 
