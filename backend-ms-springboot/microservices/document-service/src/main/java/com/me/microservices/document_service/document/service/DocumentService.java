@@ -163,6 +163,10 @@ public class DocumentService {
             throw new ForbiddenDocumentUpdateException("The document hasn't ready yet");
         }
         
+        if (employeeData.hierarchy().equals("OPERATIVE")) {
+            throw new ForbiddenDocumentUpdateException("Operative employees can´t update documents");
+        }
+        
         if (entity.getConfidentialityLevel() == ConfidentialityLevel.CONFIDENTIAL
             && !employeeData.hierarchy().equals("DIRECTOR")
         ) {

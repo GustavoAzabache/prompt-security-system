@@ -1,6 +1,5 @@
 package com.me.microservices.document_service.document.controller;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -30,9 +29,6 @@ import com.me.microservices.document_service.document.dto.request.ChangeConfiden
 import com.me.microservices.document_service.document.dto.response.ChangeConfidentialityResponse;
 import com.me.microservices.document_service.document.dto.response.DocumentResponse;
 import com.me.microservices.document_service.document.dto.response.UploadDocumentResponse;
-import com.me.microservices.document_service.document.exception.ForbiddenDocumentUpdateException;
-import com.me.microservices.document_service.document.exception.ForbiddenReadException;
-import com.me.microservices.document_service.document.exception.ForbiddenUploadException;
 import com.me.microservices.document_service.document.service.DocumentService;
 
 import jakarta.validation.Valid;
@@ -50,25 +46,19 @@ public class DocumentController {
         @RequestParam("pageNumber") int pageNumber,
         @AuthenticationPrincipal Jwt jwt
     ) {
-        EmployeeData employeeData = ensureEmployee(jwt);
-
         Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by(Direction.ASC, "createdAt"));
 
-        return ResponseEntity.ok(documentService.getAll(pageable, employeeData));
+        return ResponseEntity.ok(documentService.getAll(pageable, getEmployeeData(jwt)));
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<DocumentResponse> getById(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        EmployeeData employeeData = ensureEmployee(jwt);
-
-        return ResponseEntity.ok(documentService.getById(id, employeeData));
+        return ResponseEntity.ok(documentService.getById(id, getEmployeeData(jwt)));
     }
 
     @GetMapping("/{id}/content")
     public ResponseEntity<Resource> getContent(@PathVariable UUID id, @AuthenticationPrincipal Jwt jwt) {
-        EmployeeData employeeData = ensureEmployee(jwt);
-
-        DocumentContent content = documentService.getContent(id, employeeData);
+        DocumentContent content = documentService.getContent(id, getEmployeeData(jwt));
         String safeFilename = content.fileName().replace("\"", "").replace("\n", "").replace("\r", "");
 
         return ResponseEntity.ok()
@@ -86,15 +76,9 @@ public class DocumentController {
         @RequestParam("file") MultipartFile file,
         @AuthenticationPrincipal Jwt jwt
     ) {
-        EmployeeData employeeData = getEmployeeData(jwt);
-
-        if (employeeData.area() == null) throw new ForbiddenUploadException("Only employees can upload documents");
-
-        UploadDocumentResponse response = documentService.upload(file, employeeData);
-
-        URI location = URI.create("/api/v1/documents/" + response.id());
+        UploadDocumentResponse response = documentService.upload(file, getEmployeeData(jwt));
         
-        return ResponseEntity.created(location).body(response);
+        return ResponseEntity.accepted().body(response);
     }
 
     @PatchMapping("/{id}/change-confidentiality")
@@ -103,17 +87,7 @@ public class DocumentController {
         @Valid @RequestBody ChangeConfidentialityRequest request,
         @AuthenticationPrincipal Jwt jwt
     ) {
-        EmployeeData employeeData = getEmployeeData(jwt);
-
-        if (employeeData.area() == null) {
-            throw new ForbiddenDocumentUpdateException("Only employees can update documents");
-        }
-
-        if (employeeData.hierarchy().equals("OPERATIVE")) {
-            throw new ForbiddenDocumentUpdateException("Operative employees can´t update documents");
-        }
-
-        return ResponseEntity.ok(documentService.changeConfidentiality(id, request, employeeData));
+        return ResponseEntity.accepted().body(documentService.changeConfidentiality(id, request, getEmployeeData(jwt)));
     }
 
     private EmployeeData getEmployeeData(Jwt jwt) {
@@ -122,14 +96,6 @@ public class DocumentController {
             jwt.getClaimAsString("area"),
             jwt.getClaimAsString("hierarchy")
         );
-    }
-
-    private EmployeeData ensureEmployee(Jwt jwt) {
-        EmployeeData employeeData = getEmployeeData(jwt);
-
-        if (employeeData.area() == null) throw new ForbiddenReadException("Only employees can read documents");
-
-        return employeeData;
     }
 
 }
