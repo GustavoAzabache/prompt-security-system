@@ -94,6 +94,13 @@ public class DocumentService {
         return new DocumentContent(mediaType, entity.getSize(), entity.getTitle(), resource);
     }
 
+    public List<DocumentResponse> getAllWithStatusContentReadyToRead(Pageable pageable, EmployeeData employeeData) {
+        return documentRepository.findByStatus(pageable, DocumentStatus.CONTENT_READY_TO_READ).stream()
+            .filter(doc -> canRead(doc, employeeData))
+            .map(documentMapper::fromEntityToResponse)
+            .toList();
+    }
+
     public UploadDocumentResponse upload(MultipartFile file, EmployeeData employeeData) {
         
         // 1. Detectar MIME real

@@ -70,6 +70,16 @@ public class DocumentController {
             )
             .body(content.resource());
     }
+
+    @GetMapping
+    public ResponseEntity<List<DocumentResponse>> getAllWithStatusContentReadyToRead(
+        @RequestParam("pageNumber") int pageNumber,
+        @AuthenticationPrincipal Jwt jwt
+    ) {
+        Pageable pageable = PageRequest.of(pageNumber, 10, Sort.by(Direction.ASC, "createdAt"));
+
+        return ResponseEntity.ok(documentService.getAllWithStatusContentReadyToRead(pageable, getEmployeeData(jwt)));
+    }
         
     @PostMapping
     public ResponseEntity<UploadDocumentResponse> upload(
