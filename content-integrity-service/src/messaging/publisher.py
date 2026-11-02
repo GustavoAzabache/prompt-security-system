@@ -1,5 +1,6 @@
 import pika
 import json
+import os
 
 class DocumentEventPublisher:
 
@@ -7,9 +8,13 @@ class DocumentEventPublisher:
         self.exchange = "document.exchange.response"
         self.routing_key = "document.event.scan-result"
 
-        credentials = pika.PlainCredentials("rabbit", "rabbit")
+        USUARIO = os.getenv('RABBITMQ_USERNAME', 'rabbit')
+        PASSWORD = os.getenv('RABBITMQ_PASSWORD', 'rabbit')
+        HOST = os.getenv('RABBITMQ_HOST', 'localhost')
+
+        credentials = pika.PlainCredentials(USUARIO, PASSWORD)
         parameters = pika.ConnectionParameters(
-            host="localhost",
+            host=HOST,
             virtual_host="/",
             credentials=credentials
         )

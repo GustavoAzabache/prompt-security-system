@@ -1,9 +1,10 @@
 import pika, json
+import os
 
 def start_listener(callback_funcion):
-    USUARIO = 'rabbit'
-    PASSWORD = 'rabbit'
-    HOST = 'localhost'
+    USUARIO = os.getenv('RABBITMQ_USERNAME', 'rabbit')
+    PASSWORD = os.getenv('RABBITMQ_PASSWORD', 'rabbit')
+    HOST = os.getenv('RABBITMQ_HOST', 'localhost')
     VIRTUAL_HOST = '/'
 
     credentials = pika.PlainCredentials(USUARIO, PASSWORD)
