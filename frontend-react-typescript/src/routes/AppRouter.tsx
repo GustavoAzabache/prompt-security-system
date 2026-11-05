@@ -1,11 +1,11 @@
 import { Navigate, Route, Routes } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { AccessPage } from '@/pages/Access/AccessPage';
-import { AdminPage } from '@/pages/Admin/AdminPage';
 import { AskPage } from '@/pages/Ask/AskPage';
 import { DocumentsPage } from '@/pages/Documents/DocumentsPage';
 import { HomePage } from '@/pages/Home/HomePage';
 import { LoginPage } from '@/pages/Login/LoginPage';
+import { PendingIndexPage } from '@/pages/PendingIndex/PendingIndexPage';
 import { RegisterPage } from '@/pages/Register/RegisterPage';
 import { PATHS } from '@/routes/paths';
 import { ProtectedRoute } from '@/routes/ProtectedRoute';
@@ -23,12 +23,12 @@ export function AppRouter() {
           element={<ProtectedRoute element={<DocumentsPage />} requireEmployee />}
         />
         <Route
-          path={PATHS.access}
-          element={<ProtectedRoute element={<AccessPage />} requireEmployee />}
+          path={PATHS.pendingIndex}
+          element={<ProtectedRoute element={<PendingIndexPage />} requireEmployee />}
         />
         <Route
-          path={PATHS.admin}
-          element={<ProtectedRoute element={<AdminPage />} requireDirector />}
+          path={PATHS.access}
+          element={<ProtectedRoute element={<AccessPage />} requireEmployee />}
         />
         <Route path="*" element={<Navigate to={PATHS.home} replace />} />
       </Route>

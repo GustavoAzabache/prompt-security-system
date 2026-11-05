@@ -3,7 +3,7 @@ export const PATHS = {
   login: '/login',
   register: '/register',
   documents: '/documents',
+  pendingIndex: '/documents/pending-index',
   access: '/documents/access',
   ask: '/ask',
-  admin: '/admin',
 } as const;

@@ -7,7 +7,7 @@ const navLink =
   'rounded-md px-3 py-2 text-sm text-on-primary/90 hover:bg-white/10 hover:text-on-primary focus-visible:outline-2 focus-visible:outline-white';
 
 export function MainLayout() {
-  const { isAuthenticated, isEmployee, isDirector, payload, logout } = useAuth();
+  const { isAuthenticated, isEmployee, payload, logout } = useAuth();
   const canUpdate = canUpdateDocuments(payload);
 
   return (
@@ -21,20 +21,20 @@ export function MainLayout() {
             <>
               {isEmployee && (
                 <Link to={PATHS.documents} className={navLink}>
-                  Documents
+                  Documentos
+                </Link>
+              )}
+              {isEmployee && (
+                <Link to={PATHS.pendingIndex} className={navLink}>
+                  Por indexar
                 </Link>
               )}
               <Link to={PATHS.ask} className={navLink}>
-                Ask
+                Consultar
               </Link>
               {isEmployee && canUpdate && (
                 <Link to={PATHS.access} className={navLink}>
-                  Access
-                </Link>
-              )}
-              {isDirector && (
-                <Link to={PATHS.admin} className={navLink}>
-                  Admin
+                  Acceso
                 </Link>
               )}
               <button
@@ -42,16 +42,16 @@ export function MainLayout() {
                 onClick={logout}
                 className="min-h-11 cursor-pointer rounded-md border border-white/30 px-3 py-2 text-sm text-on-primary hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-white"
               >
-                Logout
+                Cerrar sesión
               </button>
             </>
           ) : (
             <>
               <Link to={PATHS.login} className={navLink}>
-                Login
+                Iniciar sesión
               </Link>
               <Link to={PATHS.register} className={navLink}>
-                Register
+                Registrarse
               </Link>
             </>
           )}

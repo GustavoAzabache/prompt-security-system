@@ -6,6 +6,8 @@ import { Modal } from '@/components/ui/Modal';
 import { useAuth } from '@/hooks/useAuth';
 import { useDocumentPreview } from '@/hooks/useDocumentPreview';
 import { useDocuments } from '@/hooks/useDocuments';
+import type { DocumentListItem } from '@/types/document.types';
+import { ChangeConfidentialityModal } from './components/ChangeConfidentialityModal';
 import { DocumentList } from './components/DocumentList';
 import { UploadForm } from './components/UploadForm';
 
@@ -15,6 +17,7 @@ export function DocumentsPage() {
     useDocuments();
   const preview = useDocumentPreview();
   const [uploadOpen, setUploadOpen] = useState(false);
+  const [confTarget, setConfTarget] = useState<DocumentListItem | null>(null);
 
   useEffect(() => {
     if (isEmployee) {
@@ -54,10 +57,16 @@ export function DocumentsPage() {
         loading={listLoading}
         error={listError}
         onRetry={() => refreshList().catch(() => {})}
-        onSelect={(doc) => void preview.open(doc)}
+        onSelect={(doc) => {
+          // Los rechazados no tienen archivo (se borró): no hay preview.
+          if (doc.status === 'CONTENT_REJECTED') return;
+          void preview.open(doc);
+        }}
         page={page}
         hasMore={hasMore}
         onPageChange={(p) => void loadPage(p).catch(() => {})}
+        canChangeConfidentiality={payload?.hierarchy !== 'OPERATIVE'}
+        onChangeConfidentiality={setConfTarget}
       />
 
       {uploadOpen && (
@@ -75,6 +84,14 @@ export function DocumentsPage() {
           preview={preview.preview}
           reasons={preview.reasons}
           onClose={preview.close}
+        />
+      )}
+
+      {confTarget && (
+        <ChangeConfidentialityModal
+          doc={confTarget}
+          onClose={() => setConfTarget(null)}
+          onChanged={() => refreshList().catch(() => {})}
         />
       )}
     </section>

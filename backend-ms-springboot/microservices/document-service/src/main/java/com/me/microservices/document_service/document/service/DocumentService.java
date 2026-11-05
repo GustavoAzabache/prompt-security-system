@@ -4,7 +4,9 @@ import java.io.File;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
@@ -55,10 +57,43 @@ public class DocumentService {
     private final FileStorageService fileStorageService;
     private final DocumentEventPublisher documentEventPublisher;
 
+    // Acá deben de aparecer todos los documetos indexados o no, según su data de empleado
     public List<DocumentResponse> getAll(Pageable pageable, EmployeeData employeeData) {
-        return documentRepository.findAll(pageable).stream()
+        List<DocumentEntity> page = documentRepository.findAll(pageable).stream()
             .filter(doc -> canRead(doc, employeeData))
-            .map(documentMapper::fromEntityToResponse)
+            .toList();
+
+        return toResponsesWithFindings(page);
+    }
+
+    // Adjunta los motivos de rechazo (colección rejected_documents) a los
+    // documentos de la página. Una sola consulta, sin N+1.
+    private List<DocumentResponse> toResponsesWithFindings(List<DocumentEntity> documents) {
+        if (documents.isEmpty()) {
+            return List.of();
+        }
+
+        List<String> rejectedIds = documents.stream()
+            .filter(doc -> doc.getStatus() == DocumentStatus.CONTENT_REJECTED)
+            .map(DocumentEntity::getId)
+            .toList();
+
+        Map<String, List<String>> findingsById = rejectedIds.isEmpty()
+            ? Map.of()
+            : rejectedDocumentRepository.findByDocumentIdIn(rejectedIds).stream()
+                .collect(Collectors.toMap(
+                    RejectedDocumentEntity::getDocumentId,
+                    RejectedDocumentEntity::getFindings,
+                    (first, second) -> first
+                ));
+
+        return documents.stream()
+            .map(doc -> documentMapper.fromEntityToResponse(
+                doc,
+                doc.getStatus() == DocumentStatus.CONTENT_REJECTED
+                    ? findingsById.getOrDefault(doc.getId(), List.of())
+                    : List.of()
+            ))
             .toList();
     }
 
@@ -79,6 +114,12 @@ public class DocumentService {
             throw new DocumentNotFoundException("The document with ID " + id + " doesn't exist.");
         }
 
+        // El archivo físico se elimina al rechazar el documento: no hay
+        // contenido que servir.
+        if (entity.getStatus() == DocumentStatus.CONTENT_REJECTED) {
+            throw new DocumentNotFoundException("The document with ID " + id + " doesn't exist.");
+        }
+
         Path path = Paths.get(entity.getLocation());
 
         Resource resource = new FileSystemResource(path);
@@ -94,6 +135,7 @@ public class DocumentService {
         return new DocumentContent(mediaType, entity.getSize(), entity.getTitle(), resource);
     }
 
+    // Únicamente para la vista de indexación manual
     public List<DocumentResponse> getAllWithStatusContentReadyToRead(Pageable pageable, EmployeeData employeeData) {
         return documentRepository.findByStatus(pageable, DocumentStatus.CONTENT_READY_TO_READ).stream()
             .filter(doc -> canRead(doc, employeeData))
@@ -170,7 +212,7 @@ public class DocumentService {
 
     private void canChangeConfidentiality(DocumentEntity entity, EmployeeData employeeData) {
         if (entity.getStatus() != DocumentStatus.CONTENT_READY_TO_READ
-            || entity.getStatus() != DocumentStatus.READY_TO_READ_AND_CONSULT) {
+            && entity.getStatus() != DocumentStatus.READY_TO_READ_AND_CONSULT) {
             throw new ForbiddenDocumentUpdateException("The document hasn't ready yet");
         }
         
@@ -192,7 +234,19 @@ public class DocumentService {
     }
 
     private boolean canRead(DocumentEntity entity, EmployeeData employeeData) {
-        if (entity.getStatus() != DocumentStatus.CONTENT_READY_TO_READ) return false;
+        DocumentStatus status = entity.getStatus();
+
+        // PENDING (aún sin escanear) no se lista. CONTENT_REJECTED sí se
+        // lista pero solo con las reglas de confidencialidad de abajo.
+        if (status == DocumentStatus.PENDING) {
+            return false;
+        }
+
+        if (status != DocumentStatus.CONTENT_READY_TO_READ
+            && status != DocumentStatus.READY_TO_READ_AND_CONSULT
+            && status != DocumentStatus.CONTENT_REJECTED) {
+            return false;
+        }
         
         return switch (entity.getConfidentialityLevel()) {
             // PUBLIC se lista a cualquier empleado: el controller ya rechazó
@@ -217,8 +271,6 @@ public class DocumentService {
         document.toContentReadyToRead();
 
         documentRepository.save(document);
-
-        // logica websockets para avisar a mi frontend que el documento ya está subido usando document.getTitle()
     }
 
     private void rejectContentDocument(String id, List<String> findings) {
@@ -242,8 +294,6 @@ public class DocumentService {
         );
 
         documentRepository.save(document);
-
-        // logica websockets para avisar a mi frontend que el documento ha sido rechazado usando document.getTitle()
     }
 
     public void changeStatus(DocumentStatusChangedEvent event) {
@@ -251,10 +301,7 @@ public class DocumentService {
 
         switch (event.statusChanged()) {
             case "INDEXING" -> document.toIndexing();
-            case "READY_TO_READ_AND_CONSULT" -> {
-                // logica websockets para avisar a mi frontend que el documento ya puede ser consultado por el RAG
-                document.toReadyToReadAndConsult();
-            }
+            case "READY_TO_READ_AND_CONSULT" -> document.toReadyToReadAndConsult();
             case "CONTENT_READY_TO_READ" -> document.toContentReadyToRead();
             default -> document.toContentReadyToRead();
         };

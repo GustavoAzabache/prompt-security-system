@@ -1,9 +1,15 @@
 from clients.get_token_client import GetTokenClient
 from clients.document_client import DocumentClient
 from services.pdf_analyzer_service import PdfAnalyzerService
-from messaging.listener import start_listener
+from messaging.listener import start_listener, declare_topology
 from messaging.publisher import DocumentEventPublisher
 import requests
+
+# PASO 0: declarar la cola de escaneo ANTES de cargar el modelo.
+# La carga de LLM-Guard tarda minutos; si la cola no existe todavía,
+# cualquier documento subido en ese intervalo publica a un exchange sin
+# binding y el mensaje se descarta en silencio (documento eterno PENDING).
+declare_topology()
 
 # Inicialización modular de dependencias
 token_client = GetTokenClient()

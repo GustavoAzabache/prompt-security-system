@@ -49,11 +49,17 @@ public class IngestService {
             return new IngestDocumentResponse(id.toString(), "ALREADY_INDEXED", null, null, null);
         }
 
+        // Se leen ANTES de marcar INDEXING: document-service responde 404
+        // (canRead=false) para estados no legibles, e INDEXING no lo es.
+        // Si se publicara INDEXING primero, el Feign de fetchMetadata llegaría
+        // cuando el documento ya cambió de estado y la indexación fallaría
+        // siempre con "Document not found in document-service".
+        DocumentMetadata metadata = fetchMetadata(id, authorization);
+        Resource resource = documentService.getContent(id, authorization);
+
         ragEventPublisher.changeStatus(id.toString(), "INDEXING");
 
         try {
-            DocumentMetadata metadata = fetchMetadata(id, authorization);
-            Resource resource = documentService.getContent(id, authorization);
             String text = extractText(resource, metadata);
             List<Document> chunks = split(text, metadata);
             store(chunks);

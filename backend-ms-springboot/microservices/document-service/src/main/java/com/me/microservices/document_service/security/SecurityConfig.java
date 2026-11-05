@@ -46,6 +46,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(
                 auth -> auth
                     .requestMatchers(HttpMethod.OPTIONS).permitAll()
+                    .requestMatchers("/actuator/health").permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/v1/documents/internal/{id}/content").hasAuthority("SCOPE_documents:scan")
                     .requestMatchers("/api/v1/documents/**").hasRole("EMPLOYEE")
                     .anyRequest().authenticated()

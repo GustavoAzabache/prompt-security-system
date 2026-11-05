@@ -48,6 +48,7 @@ public class SecurityConfig {
             )
             .authorizeHttpRequests(
                 auth -> auth
+                    .requestMatchers("/actuator/health").permitAll()
                     .requestMatchers(HttpMethod.POST, "/api/v1/auth/employees/register")
                         .hasAnyRole("JEFE", "GERENTE", "DIRECTOR")
                     .requestMatchers(HttpMethod.PATCH, "/api/v1/auth/employees/{id}/promote")

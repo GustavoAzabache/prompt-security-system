@@ -43,11 +43,3 @@ export interface RegisterExternalRequest {
   email: string;
   password: string;
 }
-
-export interface PromoteEmployeeResponse {
-  message: string;
-}
-
-export interface UnpromoteEmployeeResponse {
-  message: string;
-}

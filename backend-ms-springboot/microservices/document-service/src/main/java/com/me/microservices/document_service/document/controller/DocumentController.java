@@ -71,7 +71,7 @@ public class DocumentController {
             .body(content.resource());
     }
 
-    @GetMapping
+    @GetMapping("/not-index")
     public ResponseEntity<List<DocumentResponse>> getAllWithStatusContentReadyToRead(
         @RequestParam("pageNumber") int pageNumber,
         @AuthenticationPrincipal Jwt jwt

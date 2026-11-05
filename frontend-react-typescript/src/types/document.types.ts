@@ -1,5 +1,12 @@
 export type TypeDocument = 'PDF' | 'DOCX' | 'XLSX' | 'TXT';
 
+export type DocumentStatus =
+  | 'PENDING'
+  | 'CONTENT_READY_TO_READ'
+  | 'CONTENT_REJECTED'
+  | 'INDEXING'
+  | 'READY_TO_READ_AND_CONSULT';
+
 export type ConfidentialityLevel =
   | 'PUBLIC'
   | 'PRIVATE_ALL_AREAS'
@@ -28,6 +35,9 @@ export interface DocumentListItem {
   type: string;
   area: string;
   confidentialityLevel: string;
+  status: DocumentStatus;
+  /** Motivos de rechazo; solo presente (no vacío) si status es CONTENT_REJECTED. */
+  findings?: string[];
 }
 
 export interface DocumentPreview {

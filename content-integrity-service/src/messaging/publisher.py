@@ -19,14 +19,11 @@ class DocumentEventPublisher:
             credentials=credentials
         )
 
-        self.connection = pika.BlockingConnection(parameters)
-        self.channel = self.connection.channel()
-
-        self.channel.exchange_declare(
-            exchange=self.exchange,
-            exchange_type="topic",
-            durable=True
-        )
+        # La conexión NO se crea en __init__: quedaría inactiva durante
+        # todo el escaneo y el broker la cerraría por missed heartbeats
+        # (timeout 60s), provocando una excepción en basic_publish al
+        # final del flujo. Ver _publish.
+        self._parameters = parameters
 
     def publish_document_result(
         self,
@@ -43,21 +40,40 @@ class DocumentEventPublisher:
         self._publish(payload)
 
     def _publish(self, payload: dict):
-        self.channel.basic_publish(
-            exchange=self.exchange,
-            routing_key=self.routing_key,
-            body=json.dumps(payload, ensure_ascii=False),
-            properties=pika.BasicProperties(
-                delivery_mode=2,
-                content_type="application/json"
-            )
-        )
+        body = json.dumps(payload, ensure_ascii=False)
+        connection = None
 
-        print(
-            f"[Publisher] Resultado publicado para el documento "
-            f"{payload['documentId']}: accept={payload['accept']}."
-        )
+        try:
+            # Conexión corta: se abre, se publica y se cierra. Así nunca
+            # queda una conexión inactiva que el broker cierre por missed
+            # heartbeats mientras el escáner trabaja.
+            connection = pika.BlockingConnection(self._parameters)
+            channel = connection.channel()
+
+            channel.exchange_declare(
+                exchange=self.exchange,
+                exchange_type="topic",
+                durable=True
+            )
+
+            channel.basic_publish(
+                exchange=self.exchange,
+                routing_key=self.routing_key,
+                body=body,
+                properties=pika.BasicProperties(
+                    delivery_mode=2,
+                    content_type="application/json"
+                )
+            )
+
+            print(
+                f"[Publisher] Resultado publicado para el documento "
+                f"{payload['documentId']}: accept={payload['accept']}."
+            )
+        finally:
+            if connection is not None and connection.is_open:
+                connection.close()
 
     def close(self):
-        if self.connection and self.connection.is_open:
-            self.connection.close()
+        """No-op: la conexión se abre y cierra en cada _publish."""
+        return None

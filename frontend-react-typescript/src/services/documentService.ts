@@ -11,6 +11,10 @@ const BASE = '/api/v1/documents';
 export const documentService = {
   list: (pageNumber = 0) =>
     api.get<DocumentListItem[]>(BASE, { params: { pageNumber } }).then((r) => r.data),
+  listNotIndexed: (pageNumber = 0) =>
+    api
+      .get<DocumentListItem[]>(`${BASE}/not-index`, { params: { pageNumber } })
+      .then((r) => r.data),
   getContent: (id: string) =>
     api.get<Blob>(`${BASE}/${id}/content`, { responseType: 'blob' }).then((r) => ({
       blob: r.data,

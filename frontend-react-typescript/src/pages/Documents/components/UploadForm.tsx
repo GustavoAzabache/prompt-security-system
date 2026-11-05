@@ -5,7 +5,6 @@ import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { FormError } from '@/components/ui/FormError';
 import { useDocuments } from '@/hooks/useDocuments';
-import { useRag } from '@/hooks/useRag';
 import { uploadDocumentSchema } from '@/schemas/document.schema';
 
 interface UploadFormProps {
@@ -15,11 +14,8 @@ interface UploadFormProps {
 
 export function UploadForm({ onUploaded, onClose }: UploadFormProps) {
   const { upload, loading } = useDocuments();
-  const { ingest, ingesting } = useRag();
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [uploadedId, setUploadedId] = useState<string | null>(null);
-  const [ingestMsg, setIngestMsg] = useState<string | null>(null);
   const [inputKey, setInputKey] = useState(0);
   const {
     control,
@@ -34,11 +30,9 @@ export function UploadForm({ onUploaded, onClose }: UploadFormProps) {
   const onSubmit = handleSubmit(async (values) => {
     setSubmitError(null);
     setSuccess(null);
-    setIngestMsg(null);
     try {
       const data = await upload(values.file);
       setSuccess(`${data.name} (${data.type}, ${data.size} bytes)`);
-      setUploadedId(data.id);
       reset({ file: undefined as unknown as File });
       setInputKey((k) => k + 1);
       onUploaded?.();
@@ -46,21 +40,6 @@ export function UploadForm({ onUploaded, onClose }: UploadFormProps) {
       setSubmitError('Upload failed. Only employees can upload PDF files.');
     }
   });
-
-  const onIndexNow = async () => {
-    if (!uploadedId) return;
-    setIngestMsg(null);
-    try {
-      const data = await ingest(uploadedId, false);
-      setIngestMsg(
-        data.status === 'ALREADY_INDEXED'
-          ? 'Already indexed. No quota spent.'
-          : `Indexed: ${data.chunkCount} chunks.`,
-      );
-    } catch {
-      setIngestMsg('Indexing failed.');
-    }
-  };
 
   return (
     <Card className="p-6">
@@ -101,17 +80,14 @@ export function UploadForm({ onUploaded, onClose }: UploadFormProps) {
         {success && (
           <div className="flex flex-col gap-2">
             <p className="text-sm text-accent">{success}</p>
-            <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="secondary" disabled={ingesting} onClick={onIndexNow}>
-                {ingesting ? 'Indexing…' : 'Index now'}
+            <p className="text-sm text-muted-foreground">
+              Una vez aprobado el escaneo, indexa el documento desde la vista «Por indexar».
+            </p>
+            {onClose && (
+              <Button type="button" variant="ghost" onClick={onClose}>
+                Cerrar
               </Button>
-              {onClose && (
-                <Button type="button" variant="ghost" onClick={onClose}>
-                  Close
-                </Button>
-              )}
-            </div>
-            {ingestMsg && <p className="text-sm text-accent">{ingestMsg}</p>}
+            )}
           </div>
         )}
       </form>
