@@ -39,7 +39,7 @@ export function useRag() {
         setAskStatus('idle');
         return null;
       }
-      setAskError('The question failed. Check coverage or try again.');
+      setAskError('La pregunta falló. Revisa la cobertura o inténtalo de nuevo.');
       setAskStatus('error');
       throw e;
     }

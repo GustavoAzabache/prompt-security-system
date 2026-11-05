@@ -61,8 +61,9 @@ async function extractMessages(e: unknown): Promise<string[]> {
         // fall through to generic message
       }
     }
-    if (e.response?.status === 404) return ['Document not found or you lack permission to view it'];
-    if (e.response?.status === 403) return ['Access denied by the server'];
+    if (e.response?.status === 404)
+      return ['No se encontró el documento o no tienes permiso para verlo'];
+    if (e.response?.status === 403) return ['Acceso denegado por el servidor'];
   }
-  return ['Could not open the document'];
+  return ['No se pudo abrir el documento'];
 }

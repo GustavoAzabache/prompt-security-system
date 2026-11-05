@@ -24,11 +24,11 @@ export function AskPage() {
   return (
     <section className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <div className="flex flex-col gap-1">
-        <h1 className="text-2xl font-semibold">Ask the documents</h1>
+        <h1 className="text-2xl font-semibold">Consultar los documentos</h1>
         <p className="text-sm text-muted-foreground">
           {isEmployee
-            ? 'Answers come from documents you are allowed to see, with cited sources.'
-            : 'External view: answers only use PUBLIC documents.'}
+            ? 'Las respuestas provienen de los documentos que puedes ver, con fuentes citadas.'
+            : 'Vista externa: las respuestas solo usan documentos públicos.'}
         </p>
       </div>
 
@@ -42,7 +42,7 @@ export function AskPage() {
       {askStatus === 'error' && lastQuery && (
         <div className="flex flex-wrap gap-2">
           <Button type="button" variant="secondary" onClick={() => onSubmit(lastQuery)}>
-            Retry
+            Reintentar
           </Button>
         </div>
       )}
@@ -51,7 +51,7 @@ export function AskPage() {
         <Card className="flex items-center gap-3 p-6" aria-busy="true">
           <Spinner />
           <p className="text-sm text-muted-foreground">
-            Thinking… this can take up to a minute. You can cancel anytime.
+            Pensando… esto puede tardar hasta un minuto. Puedes cancelar en cualquier momento.
           </p>
         </Card>
       )}

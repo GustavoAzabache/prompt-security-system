@@ -2,7 +2,7 @@ export function Spinner() {
   return (
     <svg
       role="status"
-      aria-label="Loading"
+      aria-label="Cargando"
       viewBox="0 0 24 24"
       className="h-5 w-5 animate-spin text-muted-foreground"
       fill="none"

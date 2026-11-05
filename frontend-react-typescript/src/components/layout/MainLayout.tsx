@@ -13,7 +13,7 @@ export function MainLayout() {
   return (
     <div className="flex min-h-svh flex-col bg-background text-foreground">
       <header className="bg-primary text-on-primary shadow">
-        <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-2 px-4 py-3" aria-label="Main">
+        <nav className="mx-auto flex w-full max-w-5xl flex-wrap items-center gap-2 px-4 py-3" aria-label="Principal">
           <Link to={PATHS.home} className="mr-auto text-sm font-semibold tracking-wide text-on-primary">
             Prompt Security
           </Link>

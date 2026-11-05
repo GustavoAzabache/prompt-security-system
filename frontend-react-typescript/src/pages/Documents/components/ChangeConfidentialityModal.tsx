@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/Button';
 import { Modal } from '@/components/ui/Modal';
 import { Select } from '@/components/ui/Select';
 import { CONFIDENTIALITY_LEVELS } from '@/constants/roles';
+import { CONFIDENTIALITY_LABELS } from '@/constants/labels';
 import { documentService } from '@/services/documentService';
 import type { ErrorResponse } from '@/types/api.types';
 import type { ConfidentialityLevel, DocumentListItem } from '@/types/document.types';
@@ -64,7 +65,11 @@ export function ChangeConfidentialityModal({ doc, onClose, onChanged }: ChangeCo
           <p className="text-sm text-muted-foreground">{doc.title}</p>
           <p className="text-sm text-muted-foreground">
             Nivel actual:{' '}
-            <span className="font-medium text-foreground">{doc.confidentialityLevel}</span>
+            <span className="font-medium text-foreground">
+              {CONFIDENTIALITY_LABELS[
+                doc.confidentialityLevel as keyof typeof CONFIDENTIALITY_LABELS
+              ] ?? doc.confidentialityLevel}
+            </span>
           </p>
         </div>
 
@@ -87,7 +92,7 @@ export function ChangeConfidentialityModal({ doc, onClose, onChanged }: ChangeCo
             >
               {CONFIDENTIALITY_LEVELS.map((l) => (
                 <option key={l} value={l}>
-                  {l}
+                  {CONFIDENTIALITY_LABELS[l]}
                 </option>
               ))}
             </Select>

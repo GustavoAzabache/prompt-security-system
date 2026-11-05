@@ -37,18 +37,18 @@ export function UploadForm({ onUploaded, onClose }: UploadFormProps) {
       setInputKey((k) => k + 1);
       onUploaded?.();
     } catch {
-      setSubmitError('Upload failed. Only employees can upload PDF files.');
+      setSubmitError('No se pudo subir el archivo. Solo los empleados pueden subir PDF.');
     }
   });
 
   return (
     <Card className="p-6">
       <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
-        <h2 className="text-lg font-semibold">Upload document</h2>
+        <h2 className="text-lg font-semibold">Subir documento</h2>
         <FormError message={submitError} />
         <div className="flex flex-col gap-1.5">
           <label htmlFor="file" className="text-sm font-medium text-foreground">
-            File (PDF only · max 10MB)
+            Archivo (solo PDF · máx 10 MB)
           </label>
           <Controller
             name="file"
@@ -75,7 +75,7 @@ export function UploadForm({ onUploaded, onClose }: UploadFormProps) {
           )}
         </div>
         <Button type="submit" disabled={loading}>
-          {loading ? 'Uploading…' : 'Upload'}
+          {loading ? 'Subiendo…' : 'Subir'}
         </Button>
         {success && (
           <div className="flex flex-col gap-2">

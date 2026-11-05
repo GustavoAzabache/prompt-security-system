@@ -28,8 +28,8 @@ export function useDocuments() {
       setDocuments(data);
       return data;
     } catch {
-      setListError('Could not load documents');
-      throw new Error('Could not load documents');
+      setListError('No se pudieron cargar los documentos');
+      throw new Error('No se pudieron cargar los documentos');
     } finally {
       setListLoading(false);
     }
@@ -47,7 +47,7 @@ export function useDocuments() {
         await refreshList().catch(() => {});
         return data;
       } catch (e) {
-        setError('Upload failed');
+        setError('No se pudo subir el documento');
         throw e;
       } finally {
         setLoading(false);
@@ -64,7 +64,7 @@ export function useDocuments() {
       setLastMessage(data.message);
       return data;
     } catch (e) {
-      setError('Update failed');
+      setError('No se pudo actualizar');
       throw e;
     } finally {
       setLoading(false);

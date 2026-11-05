@@ -8,6 +8,7 @@ import { FormError } from '@/components/ui/FormError';
 import { Input } from '@/components/ui/Input';
 import { Select } from '@/components/ui/Select';
 import { useAuth } from '@/hooks/useAuth';
+import { USER_TYPE_LABELS } from '@/constants/labels';
 import { PATHS } from '@/routes/paths';
 import { loginSchema, type LoginFormValues } from '@/schemas/auth.schema';
 
@@ -30,37 +31,37 @@ export function LoginPage() {
       await login(values.userType, { email: values.email, password: values.password });
       navigate(values.userType === 'external' ? PATHS.home : PATHS.documents);
     } catch {
-      setSubmitError('Login failed. Check your credentials.');
+      setSubmitError('No se pudo iniciar sesión. Revisa tus credenciales.');
     }
   });
 
   return (
     <section className="mx-auto flex w-full max-w-md flex-col gap-4">
-      <h1 className="text-2xl font-semibold">Login</h1>
+      <h1 className="text-2xl font-semibold">Iniciar sesión</h1>
       <Card className="p-6">
         <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
           <FormError message={submitError} />
-          <Select label="User type" error={errors.userType?.message} {...register('userType')}>
-            <option value="employee">Employee</option>
-            <option value="external">External</option>
+          <Select label="Tipo de usuario" error={errors.userType?.message} {...register('userType')}>
+            <option value="employee">{USER_TYPE_LABELS.employee}</option>
+            <option value="external">{USER_TYPE_LABELS.external}</option>
           </Select>
           <Input
-            label="Email"
+            label="Correo"
             type="email"
             autoComplete="email"
-            placeholder="name@company.com"
+            placeholder="nombre@empresa.com"
             error={errors.email?.message}
             {...register('email')}
           />
           <Input
-            label="Password"
+            label="Contraseña"
             type="password"
             autoComplete="current-password"
             error={errors.password?.message}
             {...register('password')}
           />
           <Button type="submit" disabled={isSubmitting}>
-            {isSubmitting ? 'Signing in…' : 'Login'}
+            {isSubmitting ? 'Iniciando sesión…' : 'Iniciar sesión'}
           </Button>
         </form>
       </Card>

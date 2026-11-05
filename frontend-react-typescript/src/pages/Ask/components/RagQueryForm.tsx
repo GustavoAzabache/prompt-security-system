@@ -30,13 +30,13 @@ export function RagQueryForm({ asking, submitError, onSubmit, onCancel }: RagQue
         <FormError message={submitError} />
         <div className="flex flex-col gap-1.5">
           <label htmlFor="rag-query" className="text-sm font-medium text-foreground">
-            Your question
+            Tu pregunta
           </label>
           <textarea
             id="rag-query"
             rows={3}
             maxLength={2000}
-            placeholder="e.g. What is the vacation policy?"
+            placeholder="p. ej. ¿Cuál es la política de vacaciones?"
             aria-invalid={!!errors.query}
             aria-describedby={errors.query ? 'rag-query-error' : undefined}
             {...register('query')}
@@ -49,10 +49,10 @@ export function RagQueryForm({ asking, submitError, onSubmit, onCancel }: RagQue
           )}
         </div>
         <details className="text-sm">
-          <summary className="cursor-pointer font-medium text-primary">Advanced options</summary>
+          <summary className="cursor-pointer font-medium text-primary">Opciones avanzadas</summary>
           <div className="mt-2 flex max-w-40 flex-col gap-1.5">
             <label htmlFor="rag-topk" className="text-sm font-medium text-foreground">
-              Sources to retrieve (1–10)
+              Fuentes a recuperar (1–10)
             </label>
             <input
               id="rag-topk"
@@ -71,11 +71,11 @@ export function RagQueryForm({ asking, submitError, onSubmit, onCancel }: RagQue
         </details>
         <div className="flex flex-wrap gap-2">
           <Button type="submit" disabled={asking}>
-            {asking ? 'Asking…' : 'Ask'}
+            {asking ? 'Consultando…' : 'Consultar'}
           </Button>
           {asking && (
             <Button type="button" variant="ghost" onClick={onCancel}>
-              Cancel
+              Cancelar
             </Button>
           )}
         </div>

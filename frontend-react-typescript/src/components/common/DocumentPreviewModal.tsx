@@ -20,18 +20,18 @@ function isInlineViewable(contentType: string): boolean {
 
 export function DocumentPreviewModal({ status, preview, reasons, onClose }: DocumentPreviewModalProps) {
   return (
-    <Modal title={preview?.title ?? 'Document'} onClose={onClose} wide>
+    <Modal title={preview?.title ?? 'Documento'} onClose={onClose} wide>
       {status === 'loading' && (
         <div className="flex items-center gap-3 py-8">
           <Spinner />
-          <p className="text-sm text-muted-foreground">Asking the server if you can view it…</p>
+          <p className="text-sm text-muted-foreground">Preguntando al servidor si puedes verlo…</p>
         </div>
       )}
 
       {status === 'denied' && (
         <div className="flex flex-col gap-3">
           <p role="alert" className="text-sm font-medium text-destructive">
-            You cannot view this document.
+            No puedes ver este documento.
           </p>
           <ul className="flex list-disc flex-col gap-1 pl-5 text-sm text-muted-foreground">
             {reasons.map((r) => (
@@ -39,7 +39,7 @@ export function DocumentPreviewModal({ status, preview, reasons, onClose }: Docu
             ))}
           </ul>
           <Button type="button" variant="ghost" onClick={onClose}>
-            Close
+            Cerrar
           </Button>
         </div>
       )}
@@ -55,14 +55,14 @@ export function DocumentPreviewModal({ status, preview, reasons, onClose }: Docu
       {status === 'allowed' && preview && !isInlineViewable(preview.contentType) && (
         <div className="flex flex-col gap-3">
           <p className="text-sm text-muted-foreground">
-            Preview is not available for this format ({preview.contentType}).
+            La vista previa no está disponible para este formato ({preview.contentType}).
           </p>
           <a
             href={preview.url}
             download={preview.title}
             className="inline-flex min-h-11 cursor-pointer items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-on-primary"
           >
-            Download {preview.title}
+            Descargar {preview.title}
           </a>
         </div>
       )}

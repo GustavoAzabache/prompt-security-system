@@ -2,10 +2,18 @@ import { useState } from 'react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Spinner } from '@/components/ui/Spinner';
+import { CONFIDENTIALITY_LABELS } from '@/constants/labels';
 import type { DocumentListItem, DocumentStatus } from '@/types/document.types';
 import { formatBytes } from '@/utils/formatBytes';
 
 type View = 'lines' | 'grid';
+
+/** Etiqueta en español; si el backend manda un nivel desconocido, se muestra tal cual. */
+function confidentialityLabel(level: string): string {
+  return (
+    CONFIDENTIALITY_LABELS[level as keyof typeof CONFIDENTIALITY_LABELS] ?? level
+  );
+}
 
 const STATUS_BADGES: Record<DocumentStatus, { label: string; className: string } | null> = {
   CONTENT_READY_TO_READ: {
@@ -60,7 +68,7 @@ function Meta({ doc }: { doc: DocumentListItem }) {
         {doc.type} · {formatBytes(doc.size)}
       </p>
       <p className="text-sm text-muted-foreground">
-        Area {doc.area} · {doc.confidentialityLevel}
+        Área: {doc.area} · {confidentialityLabel(doc.confidentialityLevel)}
       </p>
     </>
   );
@@ -151,10 +159,10 @@ export function DocumentList({
     canChangeConfidentiality && isConfidentialityChangeable(doc);
 
   return (
-    <section aria-label="Document list" className="flex flex-col gap-4">
+    <section aria-label="Lista de documentos" className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-lg font-semibold">Documents ({documents.length})</h2>
-        <div role="group" aria-label="View mode" className="flex gap-2">
+        <h2 className="text-lg font-semibold">Documentos ({documents.length})</h2>
+        <div role="group" aria-label="Modo de vista" className="flex gap-2">
           <button
             type="button"
             aria-pressed={view === 'lines'}
@@ -166,7 +174,7 @@ export function DocumentList({
               <rect x="2" y="9" width="16" height="2" rx="1" />
               <rect x="2" y="14" width="16" height="2" rx="1" />
             </svg>
-            Lines
+            Líneas
           </button>
           <button
             type="button"
@@ -180,7 +188,7 @@ export function DocumentList({
               <rect x="2" y="11" width="7" height="7" rx="1" />
               <rect x="11" y="11" width="7" height="7" rx="1" />
             </svg>
-            Mosaic
+            Mosaico
           </button>
         </div>
       </div>
@@ -188,7 +196,7 @@ export function DocumentList({
       {loading && (
         <Card className="flex items-center gap-3 p-6">
           <Spinner />
-          <p className="text-sm text-muted-foreground">Loading documents…</p>
+          <p className="text-sm text-muted-foreground">Cargando documentos…</p>
         </Card>
       )}
 
@@ -198,14 +206,14 @@ export function DocumentList({
             {error}
           </p>
           <Button type="button" variant="ghost" onClick={onRetry}>
-            Retry
+            Reintentar
           </Button>
         </Card>
       )}
 
       {!loading && !error && documents.length === 0 && (
         <Card className="p-6">
-          <p className="text-sm text-muted-foreground">No documents yet. Upload the first one.</p>
+          <p className="text-sm text-muted-foreground">Aún no hay documentos. Sube el primero.</p>
         </Card>
       )}
 
@@ -261,7 +269,7 @@ export function DocumentList({
       )}
       {!loading && !error && documents.length > 0 && (
         <div className="flex items-center justify-between gap-2">
-          <p className="text-sm text-muted-foreground">Page {page + 1}</p>
+          <p className="text-sm text-muted-foreground">Página {page + 1}</p>
           <div className="flex gap-2">
             <Button
               type="button"
@@ -269,7 +277,7 @@ export function DocumentList({
               disabled={page === 0}
               onClick={() => onPageChange(page - 1)}
             >
-              Previous
+              Anterior
             </Button>
             <Button
               type="button"
@@ -277,7 +285,7 @@ export function DocumentList({
               disabled={!hasMore}
               onClick={() => onPageChange(page + 1)}
             >
-              Next
+              Siguiente
             </Button>
           </div>
         </div>
